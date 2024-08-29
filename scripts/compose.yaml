@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    env_file:
+    - ../.env 
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - microservices-network
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+networks:
+  microservices-network:
+    driver: bridge
+ 
+
+ 
