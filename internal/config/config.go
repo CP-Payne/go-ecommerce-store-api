@@ -1,24 +1,28 @@
 package config
 
 import (
-	"log"
 	"os"
 
 	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
 type Config struct {
-	Port string
+	Logger *zap.Logger
+	Port   string
 }
 
 func New() *Config {
+	logger := GetLogger()
+
 	if err := godotenv.Load(); err != nil {
-		log.Fatalf("failed to load environment variables: %v", err)
+		logger.Fatal("failed to load environment variables", zap.Error(err))
 	}
 
 	port := os.Getenv("PORT")
 
 	return &Config{
-		Port: port,
+		Port:   port,
+		Logger: logger,
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/CP-Payne/ecomstore/internal/config"
 	"github.com/go-chi/chi"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -38,14 +38,17 @@ func main() {
 		err := server.ListenAndServe()
 
 		if errors.Is(err, http.ErrServerClosed) {
-			log.Printf("Server shutdown complete")
+			cfg.Logger.Info("Server shutdown complete")
+			// log.Printf("Server shutdown complete")
 		} else if err != nil {
-			log.Printf("Failed to start server")
-			os.Exit(1)
+			cfg.Logger.Fatal("server failed to start", zap.Error(err))
+			// log.Printf("Failed to start server")
+			// os.Exit(1)
 		}
 	}()
 
-	log.Printf("Server started")
+	cfg.Logger.Info("Server started...")
+	// log.Printf("Server started")
 
 	// Wait for killsignal
 	<-killSignal
@@ -54,7 +57,8 @@ func main() {
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		log.Printf("Server shutdown failed")
-		os.Exit(1)
+		cfg.Logger.Fatal("server shutdown failed", zap.Error(err))
+		// log.Printf("Server shutdown failed")
+		// os.Exit(1)
 	}
 }
