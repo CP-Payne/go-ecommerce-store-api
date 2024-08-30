@@ -15,7 +15,7 @@ var (
 func GetLogger() *zap.Logger {
 	once.Do(func() {
 		// Initialise the logger only once
-		logger := zap.Must(zap.NewProduction())
+		logger := zap.Must(zap.NewDevelopment())
 		instance = logger
 	})
 
