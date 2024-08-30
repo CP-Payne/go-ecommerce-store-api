@@ -7,6 +7,7 @@ import (
 
 	"github.com/CP-Payne/ecomstore/internal/database"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 )
 

@@ -10,25 +10,19 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/CP-Payne/ecomstore/internal/api"
 	"github.com/CP-Payne/ecomstore/internal/config"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 )
 
 func main() {
 	cfg := config.New()
 
-	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-
-	r.Get("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello"))
-	}))
-
 	killSignal := make(chan os.Signal, 1)
 
 	signal.Notify(killSignal, os.Interrupt, syscall.SIGTERM)
+
+	r := api.SetupRouter()
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.Port),
