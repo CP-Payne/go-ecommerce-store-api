@@ -1,4 +1,4 @@
 .env
 /tmp/
 run_migrations.sh
-./scripts/data/
+/scripts/data/
