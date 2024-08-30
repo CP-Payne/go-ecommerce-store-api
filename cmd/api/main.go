@@ -12,15 +12,17 @@ import (
 
 	"github.com/CP-Payne/ecomstore/internal/config"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 )
 
 func main() {
 	cfg := config.New()
 
-	router := chi.NewMux()
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
 
-	router.Get("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello"))
 	}))
 
@@ -30,7 +32,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.Port),
-		Handler: router,
+		Handler: r,
 	}
 
 	// Start server in goroutine
@@ -42,13 +44,10 @@ func main() {
 			// log.Printf("Server shutdown complete")
 		} else if err != nil {
 			cfg.Logger.Fatal("server failed to start", zap.Error(err))
-			// log.Printf("Failed to start server")
-			// os.Exit(1)
 		}
 	}()
 
 	cfg.Logger.Info("Server started...")
-	// log.Printf("Server started")
 
 	// Wait for killsignal
 	<-killSignal
@@ -58,7 +57,5 @@ func main() {
 
 	if err := server.Shutdown(ctx); err != nil {
 		cfg.Logger.Fatal("server shutdown failed", zap.Error(err))
-		// log.Printf("Server shutdown failed")
-		// os.Exit(1)
 	}
 }
