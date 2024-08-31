@@ -28,6 +28,7 @@ func SetupRouter(db *database.Queries) http.Handler {
 
 	r.Group(func(r chi.Router) {
 		r.Post("/register", userHandler.RegisterUser)
+		r.Post("/login", userHandler.LoginUser)
 	})
 
 	r.Get("/home", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

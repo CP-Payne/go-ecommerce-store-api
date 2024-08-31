@@ -9,6 +9,7 @@ import (
 	"github.com/CP-Payne/ecomstore/internal/service"
 	"github.com/CP-Payne/ecomstore/internal/utils"
 	"github.com/CP-Payne/ecomstore/internal/utils/apperrors"
+	"github.com/CP-Payne/ecomstore/internal/utils/hashing"
 	"go.uber.org/zap"
 )
 
@@ -67,4 +68,41 @@ func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	})
 
 	http.Redirect(w, r, "/home", http.StatusCreated)
+}
+
+func (h *UserHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
+	formParams := struct {
+		email    string
+		password string
+	}{
+		email:    r.FormValue("email"),
+		password: r.FormValue("password"),
+	}
+
+	user, err := h.srv.GetUserByEmail(r.Context(), formParams.email)
+	if err != nil {
+		if errors.Is(err, apperrors.ErrNotFound) {
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid credentials")
+			return
+		}
+		utils.RespondWithError(w, http.StatusInternalServerError, "failed login")
+		return
+	}
+	err = hashing.CheckPasswordHash(formParams.password, user.HashedPassword)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid credentials")
+		return
+	}
+
+	token := config.MakeToken(user.Email, user.ID)
+
+	http.SetCookie(w, &http.Cookie{
+		HttpOnly: true,
+		Expires:  time.Now().Add(7 * 24 * time.Hour),
+		SameSite: http.SameSiteLaxMode,
+		Name:     "jwt",
+		Value:    token,
+	})
+
+	http.Redirect(w, r, "/home", http.StatusSeeOther)
 }

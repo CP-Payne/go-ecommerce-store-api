@@ -27,7 +27,16 @@ func NewUserService(db *database.Queries) *UserService {
 	}
 }
 
-func (s *UserService) GetUserByEmail(email string) {
+func (s *UserService) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
+	dbUser, err := s.db.GetUserByEmail(ctx, email)
+	if err != nil {
+		if apperrors.IsNoRowsError(err) {
+			return models.User{}, fmt.Errorf("user not found: %w", apperrors.ErrNotFound)
+		}
+		s.logger.Error("failed to retrieve user from db", zap.Error(err), zap.String("email", email))
+		return models.User{}, fmt.Errorf("failed to retrieve user: %w", err)
+	}
+	return models.DatabaseUserToUser(dbUser), nil
 }
 
 func (s *UserService) CreateUser(ctx context.Context, email, name, password string) (models.User, error) {
