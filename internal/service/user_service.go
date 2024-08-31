@@ -27,11 +27,10 @@ func NewUserService(db *database.Queries) *UserService {
 	}
 }
 
-// TODO: Implement domain models. Implement some type of error handling package
 func (s *UserService) GetUserByEmail(email string) {
 }
 
-func (s *UserService) CreateUser(ctx context.Context, email, password string) (models.User, error) {
+func (s *UserService) CreateUser(ctx context.Context, email, name, password string) (models.User, error) {
 	hashedPassword, err := hashing.HashPassword(password)
 	if err != nil {
 		s.logger.Error("failed to hash user password", zap.String("user", email), zap.Error(err))
@@ -41,12 +40,13 @@ func (s *UserService) CreateUser(ctx context.Context, email, password string) (m
 	dbUser, err := s.db.CreateUser(ctx, database.CreateUserParams{
 		ID:    uuid.New(),
 		Email: email,
-		HashedPassword: sql.NullString{
-			String: hashedPassword,
+		Name: sql.NullString{
+			String: name,
 			Valid:  true,
 		},
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		HashedPassword: hashedPassword,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 	})
 	if err != nil {
 		if apperrors.IsUniqueViolation(err) {

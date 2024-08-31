@@ -14,15 +14,16 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, email, hashed_password, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, email, hashed_password, created_at, updated_at
+INSERT INTO users (id, email,name, hashed_password, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, name, email, hashed_password, created_at, updated_at
 `
 
 type CreateUserParams struct {
 	ID             uuid.UUID
 	Email          string
-	HashedPassword sql.NullString
+	Name           sql.NullString
+	HashedPassword string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
@@ -31,6 +32,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	row := q.db.QueryRowContext(ctx, createUser,
 		arg.ID,
 		arg.Email,
+		arg.Name,
 		arg.HashedPassword,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -38,6 +40,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Email,
 		&i.HashedPassword,
 		&i.CreatedAt,
@@ -47,7 +50,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, hashed_password, created_at, updated_at FROM users WHERE email = $1
+SELECT id, name, email, hashed_password, created_at, updated_at FROM users WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -55,6 +58,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Email,
 		&i.HashedPassword,
 		&i.CreatedAt,

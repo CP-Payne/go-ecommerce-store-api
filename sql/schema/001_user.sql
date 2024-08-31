@@ -1,8 +1,9 @@
 -- +goose Up
 CREATE TABLE users(
     id UUID PRIMARY KEY,
+    name VARCHAR(50),
     email VARCHAR(100) NOT NULL UNIQUE,
-    hashed_password TEXT,
+    hashed_password TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
