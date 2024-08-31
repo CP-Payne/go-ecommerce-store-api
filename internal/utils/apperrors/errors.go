@@ -1,4 +1,4 @@
-package utils
+package apperrors
 
 import (
 	"database/sql"
