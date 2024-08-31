@@ -33,7 +33,7 @@ func New() *Config {
 	dbHost := os.Getenv("POSTGRES_HOST")
 	dbName := os.Getenv("POSTGRES_DB")
 
-	connString := fmt.Sprintf("postgres://%s:%s@%s/%s", dbUser, dbPassord, dbHost, dbName)
+	connString := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", dbUser, dbPassord, dbHost, dbName)
 
 	db, err := sql.Open("postgres", connString)
 	if err != nil {

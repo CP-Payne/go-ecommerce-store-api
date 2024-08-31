@@ -52,7 +52,7 @@ func (s *UserService) CreateUser(ctx context.Context, email, name, password stri
 		if apperrors.IsUniqueViolation(err) {
 			return models.User{}, fmt.Errorf("email already exists: %w", apperrors.ErrConflict)
 		}
-		return models.User{}, fmt.Errorf("failed to create user: %w", apperrors.ErrInternal)
+		return models.User{}, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	return models.DatabaseUserToUser(dbUser), nil
