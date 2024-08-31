@@ -67,7 +67,7 @@ func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		Value:    token,
 	})
 
-	http.Redirect(w, r, "/home", http.StatusCreated)
+	http.Redirect(w, r, "/home", http.StatusSeeOther)
 }
 
 func (h *UserHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
