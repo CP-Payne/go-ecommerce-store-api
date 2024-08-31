@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
@@ -27,33 +28,34 @@ func NewUserHandler(srv *service.UserService) *UserHandler {
 }
 
 func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
-	formParams := struct {
-		email           string
-		name            string
-		password        string
-		confirmPassword string
-	}{
-		email:           r.FormValue("email"),
-		name:            r.FormValue("name"),
-		password:        r.FormValue("password"),
-		confirmPassword: r.FormValue("confirm_password"),
+	type inputParams struct {
+		Email           string `json:"email"`
+		Name            string `json:"name"`
+		Password        string `json:"password"`
+		ConfirmPassword string `json:"confirmPassword"`
 	}
 
-	if formParams.password != formParams.confirmPassword {
+	params := &inputParams{}
+
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "invalid parameters")
+		return
+	}
+
+	if params.Password != params.ConfirmPassword {
 		utils.RespondWithError(w, http.StatusBadRequest, "passwords do not match")
 		return
 	}
 	// TODO: Perform validation on email, name and password
-	//
 
-	user, err := h.srv.CreateUser(r.Context(), formParams.email, formParams.name, formParams.password)
+	user, err := h.srv.CreateUser(r.Context(), params.Email, params.Name, params.Password)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrConflict) {
 			utils.RespondWithError(w, http.StatusConflict, "Email already exist")
 			return
 		}
 		utils.RespondWithError(w, http.StatusInternalServerError, "failed to register user")
-		h.logger.Info("failed to register user", zap.Error(err), zap.String("email", formParams.email))
+		h.logger.Info("failed to register user", zap.Error(err), zap.String("email", params.Email))
 		return
 	}
 
@@ -71,15 +73,19 @@ func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
-	formParams := struct {
-		email    string
-		password string
-	}{
-		email:    r.FormValue("email"),
-		password: r.FormValue("password"),
+	type inputParams struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
-	user, err := h.srv.GetUserByEmail(r.Context(), formParams.email)
+	params := &inputParams{}
+
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "invalid parameters")
+		return
+	}
+
+	user, err := h.srv.GetUserByEmail(r.Context(), params.Email)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrNotFound) {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid credentials")
@@ -88,7 +94,7 @@ func (h *UserHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusInternalServerError, "failed login")
 		return
 	}
-	err = hashing.CheckPasswordHash(formParams.password, user.HashedPassword)
+	err = hashing.CheckPasswordHash(params.Password, user.HashedPassword)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid credentials")
 		return
