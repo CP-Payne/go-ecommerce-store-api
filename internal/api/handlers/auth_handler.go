@@ -69,7 +69,14 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		Value:    token,
 	})
 
-	http.Redirect(w, r, "/home", http.StatusSeeOther)
+	response := struct {
+		Msg string `json:"msg"`
+	}{
+		Msg: "Registration successfull",
+	}
+
+	utils.RespondWithJson(w, http.StatusCreated, &response)
+	// http.Redirect(w, r, "/home", http.StatusSeeOther)
 }
 
 func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
@@ -109,6 +116,12 @@ func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		Name:     "jwt",
 		Value:    token,
 	})
+	response := struct {
+		Msg string `json:"msg"`
+	}{
+		Msg: "Login successfull",
+	}
 
-	http.Redirect(w, r, "/home", http.StatusSeeOther)
+	utils.RespondWithJson(w, http.StatusOK, &response)
+	// http.Redirect(w, r, "/home", http.StatusSeeOther)
 }
