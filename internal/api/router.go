@@ -16,7 +16,7 @@ func SetupRouter(db *database.Queries) http.Handler {
 
 	r.Use(middleware.Logger)
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   []string{"http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "PUT", "POST", "DELETE", "OPTION"},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
