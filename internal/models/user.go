@@ -1,7 +1,6 @@
 package models
 
 import (
-	"database/sql"
 	"time"
 
 	"github.com/CP-Payne/ecomstore/internal/database"
@@ -9,8 +8,8 @@ import (
 )
 
 type User struct {
-	CreatedAt      time.Time `json:"created_at,omitempty"`
-	UpdatedAt      time.Time `json:"updated_at,omitempty"`
+	CreatedAt      time.Time `json:"createdAt,omitempty"`
+	UpdatedAt      time.Time `json:"updatedAt,omitempty"`
 	Email          string    `json:"email"`
 	HashedPassword string    `json:"-"`
 	Name           string    `json:"name"`
@@ -27,11 +26,4 @@ func DatabaseUserToUser(user database.User) User {
 		CreatedAt:      user.CreatedAt,
 		UpdatedAt:      user.UpdatedAt,
 	}
-}
-
-func NullStringToString(str sql.NullString) string {
-	if !str.Valid {
-		return ""
-	}
-	return str.String
 }

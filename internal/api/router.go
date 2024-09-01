@@ -24,12 +24,17 @@ func SetupRouter(db *database.Queries) http.Handler {
 	}))
 
 	userSrv := service.NewUserService(db)
+	productSrv := service.NewProductService(db)
+
 	authHandler := handlers.NewAuthHandler(userSrv)
+	productHandler := handlers.NewProductHandler(productSrv)
 	// TODO: if logged in and logging request is sent, redirect user to home page or profile
 
 	r.Group(func(r chi.Router) {
 		r.Post("/register", authHandler.RegisterUser)
 		r.Post("/login", authHandler.LoginUser)
+
+		r.Get("/product/{id}", productHandler.GetProduct)
 	})
 
 	r.Get("/home", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
