@@ -14,20 +14,20 @@ import (
 	"go.uber.org/zap"
 )
 
-type UserHandler struct {
+type AuthHandler struct {
 	srv    *service.UserService
 	logger *zap.Logger
 }
 
-func NewUserHandler(srv *service.UserService) *UserHandler {
+func NewAuthHandler(srv *service.UserService) *AuthHandler {
 	logger := config.GetLogger()
-	return &UserHandler{
+	return &AuthHandler{
 		srv:    srv,
 		logger: logger,
 	}
 }
 
-func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	type inputParams struct {
 		Email           string `json:"email"`
 		Name            string `json:"name"`
@@ -72,7 +72,7 @@ func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/home", http.StatusSeeOther)
 }
 
-func (h *UserHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	type inputParams struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
