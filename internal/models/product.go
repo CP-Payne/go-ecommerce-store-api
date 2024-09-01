@@ -45,8 +45,9 @@ func DatabaseProductToProduct(product database.Product) Product {
 		CategoryID:   product.ID,
 		ImageURL:     NullStringToString(product.ImageUrl),
 		ThumbnailURL: NullStringToString(product.ThumbnailUrl),
-		IsActive:     product.IsActive,
-		CreatedAt:    product.CreatedAt,
-		UpdatedAt:    product.UpdatedAt,
+
+		IsActive:  product.IsActive,
+		CreatedAt: product.CreatedAt,
+		UpdatedAt: product.UpdatedAt,
 	}
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/CP-Payne/ecomstore/internal/service"
 	"github.com/CP-Payne/ecomstore/internal/utils"
 	"github.com/CP-Payne/ecomstore/internal/utils/apperrors"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -27,9 +27,7 @@ func NewProductHandler(srv *service.ProductService) *ProductHandler {
 }
 
 func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
-	h.logger.Debug("URL STRING", zap.String("url", r.URL.String()))
 	strID := chi.URLParam(r, "id")
-	h.logger.Debug("getProduct with ID", zap.String("id", strID))
 	id, err := uuid.Parse(strID)
 	if err != nil {
 		http.Error(w, "invalid product id", http.StatusBadRequest)
