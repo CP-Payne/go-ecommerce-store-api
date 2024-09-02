@@ -34,7 +34,13 @@ func (s *ProductService) GetProduct(ctx context.Context, id uuid.UUID) (models.P
 		return models.Product{}, fmt.Errorf("failed to retrieve product: %w", err)
 
 	}
-	return models.DatabaseProductToProduct(product), nil
+
+	p, ok := models.DatabaseProductToProduct(product, false).(models.Product)
+	if !ok {
+		return models.Product{}, fmt.Errorf("failed to process interface into product: %w", err)
+	}
+
+	return p, nil
 }
 
 func (s *ProductService) GetAllProducts(ctx context.Context) ([]models.Product, error) {
@@ -44,7 +50,12 @@ func (s *ProductService) GetAllProducts(ctx context.Context) ([]models.Product, 
 		return nil, fmt.Errorf("failed to retrieve and process products: %w", err)
 	}
 
-	return models.DatabaseProductsToProducts(products), nil
+	pl, ok := models.DatabaseProductsToProducts(products, false).([]models.Product)
+	if !ok {
+		return []models.Product{}, fmt.Errorf("failed to process interface into product slice: %w", err)
+	}
+
+	return pl, nil
 }
 
 func (s *ProductService) GetProductCategories(ctx context.Context) ([]models.Category, error) {
@@ -66,5 +77,10 @@ func (s *ProductService) GetProductsByCategory(ctx context.Context, categoryID u
 		s.logger.Error("failed to retrieve products by category from db", zap.Error(err), zap.String("CategoryID", categoryID.String()))
 		return []models.Product{}, fmt.Errorf("failed to retrieve products by category: %w", err)
 	}
-	return models.DatabaseProductsToProducts(products), nil
+
+	pl, ok := models.DatabaseProductsToProducts(products, false).([]models.Product)
+	if !ok {
+		return []models.Product{}, fmt.Errorf("failed to process interface into product slice: %w", err)
+	}
+	return pl, nil
 }

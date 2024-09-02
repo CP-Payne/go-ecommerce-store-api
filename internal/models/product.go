@@ -24,20 +24,24 @@ type Product struct {
 	ThumbnailURL   string          `json:"thumbnailUrl"`
 	Specifications json.RawMessage `json:"specifications"`
 	Variants       json.RawMessage `json:"variants"`
-	IsActive       bool            `json:"isActive,omitempty"`
-	CreatedAt      time.Time       `json:"createdAt,omitempty"`
-	UpdatedAt      time.Time       `json:"updatedAt,omitempty"`
+}
+
+type ProductWithMetadata struct {
+	Product
+	IsActive  bool      `json:"isActive"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 // Database Product to product mappings
-func DatabaseProductToProduct(product database.Product) Product {
+func DatabaseProductToProduct(product database.Product, includeMetadata bool) interface{} {
 	price, err := strconv.ParseFloat(product.Price, 32)
 	if err != nil {
 		config.GetLogger().Error("failed to parse string price to float", zap.Error(err))
 		return Product{}
 	}
 
-	return Product{
+	baseProduct := Product{
 		ID:             product.ID,
 		Name:           product.Name,
 		Description:    NullStringToString(product.Description),
@@ -50,19 +54,45 @@ func DatabaseProductToProduct(product database.Product) Product {
 		ThumbnailURL:   NullStringToString(product.ThumbnailUrl),
 		Specifications: NullRawMessageToRawMessage(product.Specifications),
 		Variants:       NullRawMessageToRawMessage(product.Variants),
-		IsActive:       product.IsActive,
-		CreatedAt:      product.CreatedAt,
-		UpdatedAt:      product.UpdatedAt,
+		// IsActive:       product.IsActive,
+		// CreatedAt:      product.CreatedAt,
+		// UpdatedAt:      product.UpdatedAt,
 	}
+
+	if includeMetadata {
+		return ProductWithMetadata{
+			Product:   baseProduct,
+			IsActive:  product.IsActive,
+			CreatedAt: product.CreatedAt,
+			UpdatedAt: product.UpdatedAt,
+		}
+	}
+
+	return baseProduct
 }
 
-func DatabaseProductsToProducts(dbProdcuts []database.Product) []Product {
-	if len(dbProdcuts) == 0 {
+func DatabaseProductsToProducts(dbProducts []database.Product, includeMetadata bool) interface{} {
+	if len(dbProducts) == 0 {
+		if includeMetadata {
+			return []ProductWithMetadata{}
+		}
 		return []Product{}
 	}
-	var products []Product
-	for _, dbProd := range dbProdcuts {
-		products = append(products, DatabaseProductToProduct(dbProd))
+	if includeMetadata {
+		products := make([]ProductWithMetadata, 0, len(dbProducts))
+		for _, dbProd := range dbProducts {
+			product := DatabaseProductToProduct(dbProd, includeMetadata).(ProductWithMetadata)
+			products = append(products, product)
+		}
+		return products
+
+	} else {
+		products := make([]Product, 0, len(dbProducts))
+		for _, dbProd := range dbProducts {
+			product := DatabaseProductToProduct(dbProd, includeMetadata).(Product)
+			products = append(products, product)
+		}
+		return products
+
 	}
-	return products
 }
