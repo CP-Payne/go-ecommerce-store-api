@@ -39,6 +39,9 @@ func SetupRouter(db *database.Queries) http.Handler {
 
 		r.Get("/products", productHandler.GetAllProducts)
 		r.Get("/products/{id}", productHandler.GetProduct)
+
+		r.Get("/products/categories", productHandler.GetProductCategories)
+		r.Get("/products/categories/{id}", productHandler.GetProductsByCategory)
 	})
 
 	r.Get("/home", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

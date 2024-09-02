@@ -83,6 +83,77 @@ func (q *Queries) GetProduct(ctx context.Context, id uuid.UUID) (Product, error)
 	return i, err
 }
 
+const getProductCategories = `-- name: GetProductCategories :many
+SELECT id, name, description FROM categories
+`
+
+func (q *Queries) GetProductCategories(ctx context.Context) ([]Category, error) {
+	rows, err := q.db.QueryContext(ctx, getProductCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Category
+	for rows.Next() {
+		var i Category
+		if err := rows.Scan(&i.ID, &i.Name, &i.Description); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getProductsByCategory = `-- name: GetProductsByCategory :many
+SELECT id, name, description, price, brand, sku, stock_quantity, category_id, image_url, thumbnail_url, specifications, variants, is_active, created_at, updated_at FROM products
+WHERE category_id = $1
+`
+
+func (q *Queries) GetProductsByCategory(ctx context.Context, categoryID uuid.UUID) ([]Product, error) {
+	rows, err := q.db.QueryContext(ctx, getProductsByCategory, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Product
+	for rows.Next() {
+		var i Product
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.Price,
+			&i.Brand,
+			&i.Sku,
+			&i.StockQuantity,
+			&i.CategoryID,
+			&i.ImageUrl,
+			&i.ThumbnailUrl,
+			&i.Specifications,
+			&i.Variants,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTotalProducts = `-- name: GetTotalProducts :one
 SELECT COUNT(*) FROM products
 `

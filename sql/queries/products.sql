@@ -13,3 +13,11 @@ SELECT COUNT(*) FROM products;
 
 -- name: GetAllProducts :many
 SELECT * FROM products;
+
+-- name: GetProductCategories :many
+SELECT * FROM categories;
+
+-- name: GetProductsByCategory :many
+SELECT * FROM products
+WHERE category_id = $1;
+

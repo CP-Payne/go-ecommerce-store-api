@@ -46,3 +46,25 @@ func (s *ProductService) GetAllProducts(ctx context.Context) ([]models.Product, 
 
 	return models.DatabaseProductsToProducts(products), nil
 }
+
+func (s *ProductService) GetProductCategories(ctx context.Context) ([]models.Category, error) {
+	categories, err := s.db.GetProductCategories(ctx)
+	if err != nil {
+		s.logger.Error("failed to retrieve product categories from db", zap.Error(err))
+		return nil, fmt.Errorf("failed to retrieve and process products: %w", err)
+	}
+	return models.DatabaseCategoriesToCategories(categories), nil
+}
+
+func (s *ProductService) GetProductsByCategory(ctx context.Context, categoryID uuid.UUID) ([]models.Product, error) {
+	products, err := s.db.GetProductsByCategory(ctx, categoryID)
+	if err != nil {
+		if apperrors.IsNoRowsError(err) {
+			return []models.Product{}, fmt.Errorf("no products found for category: %w", apperrors.ErrNotFound)
+		}
+
+		s.logger.Error("failed to retrieve products by category from db", zap.Error(err), zap.String("CategoryID", categoryID.String()))
+		return []models.Product{}, fmt.Errorf("failed to retrieve products by category: %w", err)
+	}
+	return models.DatabaseProductsToProducts(products), nil
+}

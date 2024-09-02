@@ -24,7 +24,7 @@ type Product struct {
 	ThumbnailURL   string          `json:"thumbnailUrl"`
 	Specifications json.RawMessage `json:"specifications"`
 	Variants       json.RawMessage `json:"variants"`
-	IsActive       bool            `json:"isActive"`
+	IsActive       bool            `json:"isActive,omitempty"`
 	CreatedAt      time.Time       `json:"createdAt,omitempty"`
 	UpdatedAt      time.Time       `json:"updatedAt,omitempty"`
 }
