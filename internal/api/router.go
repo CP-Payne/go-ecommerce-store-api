@@ -37,7 +37,8 @@ func SetupRouter(db *database.Queries) http.Handler {
 		r.Post("/register", authHandler.RegisterUser)
 		r.Post("/login", authHandler.LoginUser)
 
-		r.Get("/product/{id}", productHandler.GetProduct)
+		r.Get("/products", productHandler.GetAllProducts)
+		r.Get("/products/{id}", productHandler.GetProduct)
 	})
 
 	r.Get("/home", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

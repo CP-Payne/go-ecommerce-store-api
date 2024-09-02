@@ -47,3 +47,13 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 
 	utils.RespondWithJson(w, http.StatusOK, product)
 }
+
+func (h *ProductHandler) GetAllProducts(w http.ResponseWriter, r *http.Request) {
+	products, err := h.srv.GetAllProducts(r.Context())
+	if err != nil {
+		h.logger.Error("failed to respond with product list", zap.Error(err))
+		utils.RespondWithError(w, http.StatusInternalServerError, "failed to retrieve products")
+		return
+	}
+	utils.RespondWithJson(w, http.StatusOK, products)
+}

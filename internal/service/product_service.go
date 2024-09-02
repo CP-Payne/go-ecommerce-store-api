@@ -36,3 +36,13 @@ func (s *ProductService) GetProduct(ctx context.Context, id uuid.UUID) (models.P
 	}
 	return models.DatabaseProductToProduct(product), nil
 }
+
+func (s *ProductService) GetAllProducts(ctx context.Context) ([]models.Product, error) {
+	products, err := s.db.GetAllProducts(ctx)
+	if err != nil {
+		s.logger.Error("failed to retrieve products from db", zap.Error(err))
+		return nil, fmt.Errorf("failed to retrieve and process products: %w", err)
+	}
+
+	return models.DatabaseProductsToProducts(products), nil
+}

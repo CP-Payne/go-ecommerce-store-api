@@ -55,3 +55,14 @@ func DatabaseProductToProduct(product database.Product) Product {
 		UpdatedAt:      product.UpdatedAt,
 	}
 }
+
+func DatabaseProductsToProducts(dbProdcuts []database.Product) []Product {
+	if len(dbProdcuts) == 0 {
+		return []Product{}
+	}
+	var products []Product
+	for _, dbProd := range dbProdcuts {
+		products = append(products, DatabaseProductToProduct(dbProd))
+	}
+	return products
+}
