@@ -89,3 +89,6 @@ func (h *ProductHandler) GetProductsByCategory(w http.ResponseWriter, r *http.Re
 
 	utils.RespondWithJson(w, http.StatusOK, products)
 }
+
+func (h *ProductHandler) AddReview(w http.ResponseWriter, r *http.Request) {
+}

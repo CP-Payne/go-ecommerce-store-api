@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/CP-Payne/ecomstore/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -18,19 +19,25 @@ type Review struct {
 	UpdatedAt  time.Time `json:"updated_at,omitempty"`
 }
 
-// Database Category to Category mappings
-// func DatabaseCategoryToCategory(category database.Category) Category {
-// 	return Category{
-// 		ID:          category.ID,
-// 		Name:        category.Name,
-// 		Description: NullStringToString(category.Description),
-// 	}
-// }
-//
-// func DatabaseCategoriesToCategories(dbReviews []database.Category) []Category {
-// 	categories := make([]Review, 0, len(dbCategories))
-// 	for i, dbCat := range dbCategories {
-// 		categories[i] = DatabaseCategoryToCategory(dbCat)
-// 	}
-// 	return categories
-// }
+// Database Review to Review mappings
+func DatabaseReviewToReview(dbReview database.Review) Review {
+	return Review{
+		ID:         dbReview.ID,
+		Title:      NullStringToString(dbReview.Title),
+		ReviewText: NullStringToString(dbReview.ReviewText),
+		Rating:     int(dbReview.Rating),
+		ProductID:  dbReview.ProductID,
+		UserID:     dbReview.UserID,
+		Deleted:    dbReview.Deleted,
+		CreatedAt:  dbReview.CreatedAt,
+		UpdatedAt:  dbReview.UpdatedAt,
+	}
+}
+
+func DatabaseReviewsToReviews(dbReviews []database.Review) []Review {
+	reviews := make([]Review, 0, len(dbReviews))
+	for _, dbRev := range dbReviews {
+		reviews = append(reviews, DatabaseReviewToReview(dbRev))
+	}
+	return reviews
+}
