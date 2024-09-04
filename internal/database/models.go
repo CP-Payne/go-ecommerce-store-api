@@ -36,6 +36,18 @@ type Product struct {
 	UpdatedAt      time.Time
 }
 
+type Review struct {
+	ID         uuid.UUID
+	Title      sql.NullString
+	ReviewText sql.NullString
+	Rating     int32
+	ProductID  uuid.UUID
+	UserID     uuid.UUID
+	Deleted    bool
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
 type User struct {
 	ID             uuid.UUID
 	Name           sql.NullString

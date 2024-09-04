@@ -84,3 +84,5 @@ func (s *ProductService) GetProductsByCategory(ctx context.Context, categoryID u
 	}
 	return pl, nil
 }
+
+func (s *ProductService) PostReview(ctx context.Context) (models.Review, error)
