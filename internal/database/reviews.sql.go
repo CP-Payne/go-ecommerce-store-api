@@ -13,10 +13,28 @@ import (
 	"github.com/google/uuid"
 )
 
+const hasUserReviewedProduct = `-- name: HasUserReviewedProduct :one
+SELECT EXISTS (
+    SELECT 1 FROM reviews WHERE user_id = $1 AND product_id = $2
+)
+`
+
+type HasUserReviewedProductParams struct {
+	UserID    uuid.UUID
+	ProductID uuid.UUID
+}
+
+func (q *Queries) HasUserReviewedProduct(ctx context.Context, arg HasUserReviewedProductParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, hasUserReviewedProduct, arg.UserID, arg.ProductID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const insertReview = `-- name: InsertReview :one
 INSERT INTO reviews (
     id, title, review_text, rating, product_id, user_id, deleted, created_at, updated_at
-) VALUES ( $1, $2, $3, $4, $5,$6,$7,$8,$9)
+) VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING id, title, review_text, rating, product_id, user_id, deleted, created_at, updated_at
 `
 

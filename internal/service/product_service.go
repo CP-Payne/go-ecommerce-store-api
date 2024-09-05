@@ -2,9 +2,7 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/CP-Payne/ecomstore/internal/config"
 	"github.com/CP-Payne/ecomstore/internal/database"
@@ -85,24 +83,4 @@ func (s *ProductService) GetProductsByCategory(ctx context.Context, categoryID u
 		return []models.Product{}, fmt.Errorf("failed to process interface into product slice: %w", err)
 	}
 	return pl, nil
-}
-
-func (s *ProductService) PostReview(ctx context.Context, title, reviewText string, rating int, productID, userID uuid.UUID) (models.Review, error) {
-	dbReview, err := s.db.InsertReview(ctx, database.InsertReviewParams{
-		ID:         uuid.New(),
-		Title:      sql.NullString{String: title, Valid: true},
-		ReviewText: sql.NullString{String: reviewText, Valid: true},
-		Rating:     int32(rating),
-		ProductID:  productID,
-		UserID:     userID,
-		Deleted:    false,
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
-	})
-	if err != nil {
-		s.logger.Error("failed to add product review", zap.Error(err), zap.String("UserID", userID.String()), zap.String("ProductID", productID.String()))
-		return models.Review{}, fmt.Errorf("failed to add product review to db: %w", err)
-	}
-	review := models.DatabaseReviewToReview(dbReview)
-	return review, nil
 }
