@@ -17,15 +17,17 @@ import (
 )
 
 type ReviewHandler struct {
-	srv    *service.ReviewService
-	logger *zap.Logger
+	srvReview  *service.ReviewService
+	srvProduct *service.ProductService
+	logger     *zap.Logger
 }
 
-func NewReviewHandler(srv *service.ReviewService) *ReviewHandler {
+func NewReviewHandler(srvReview *service.ReviewService, srvProduct *service.ProductService) *ReviewHandler {
 	logger := config.GetLogger()
 	return &ReviewHandler{
-		srv:    srv,
-		logger: logger,
+		srvReview:  srvReview,
+		srvProduct: srvProduct,
+		logger:     logger,
 	}
 }
 
@@ -35,12 +37,54 @@ type ReviewInput struct {
 	Rating     int    `json:"rating"`
 }
 
-func (h *ReviewHandler) AddReview(w http.ResponseWriter, r *http.Request) {
-	// Get productID from url parameter
+func (h *ReviewHandler) GetProductReviews(w http.ResponseWriter, r *http.Request) {
 	strProductID := chi.URLParam(r, "id")
 	productID, err := uuid.Parse(strProductID)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "invalid product id")
+		// TODO: Test remove below
+		return
+	}
+
+	productExists, err := h.srvProduct.ProductExists(r.Context(), productID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "failed to retrieve product reviews")
+		return
+	}
+
+	if !productExists {
+
+		utils.RespondWithError(w, http.StatusBadRequest, "productID provided does not exist")
+		return
+	}
+
+	productReviews, err := h.srvReview.GetProductReviews(r.Context(), productID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "failed to retrieve product reviews")
+		return
+	}
+
+	utils.RespondWithJson(w, http.StatusOK, productReviews)
+}
+
+func (h *ReviewHandler) AddReview(w http.ResponseWriter, r *http.Request) {
+	// Get productID from url parameter
+	// TODO: Make sure only a user who purchased the product can review it
+	strProductID := chi.URLParam(r, "id")
+	productID, err := uuid.Parse(strProductID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "invalid product id")
+		return
+	}
+
+	productExists, err := h.srvProduct.ProductExists(r.Context(), productID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "could not determine if product exists")
+		return
+	}
+
+	if !productExists {
+		utils.RespondWithError(w, http.StatusBadRequest, "productID provided does not exist")
 		return
 	}
 
@@ -75,7 +119,7 @@ func (h *ReviewHandler) AddReview(w http.ResponseWriter, r *http.Request) {
 		reviewInput.Rating = 1
 	}
 
-	review, err := h.srv.PostReview(r.Context(), reviewInput.Title, reviewInput.ReviewText, reviewInput.Rating, productID, userID)
+	review, err := h.srvReview.PostReview(r.Context(), reviewInput.Title, reviewInput.ReviewText, reviewInput.Rating, productID, userID)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrConflict) {
 			utils.RespondWithError(w, http.StatusConflict, "user already reviewed the product")

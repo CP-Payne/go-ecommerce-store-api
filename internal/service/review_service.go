@@ -61,3 +61,16 @@ func (s *ReviewService) PostReview(ctx context.Context, title, reviewText string
 	review := models.DatabaseReviewToReview(dbReview)
 	return review, nil
 }
+
+func (s *ReviewService) GetProductReviews(ctx context.Context, productID uuid.UUID) ([]models.Review, error) {
+	dbReviews, err := s.db.GetProductReviews(ctx, productID)
+	if err != nil {
+		if apperrors.IsNoRowsError(err) {
+			return []models.Review{}, nil
+		}
+		s.logger.Error("failed to retrieve product reviews from db", zap.Error(err), zap.String("productID", productID.String()))
+		return []models.Review{}, fmt.Errorf("failed to retrieve product reviews: %w", err)
+	}
+
+	return models.DatabaseReviewsToReviews(dbReviews), nil
+}

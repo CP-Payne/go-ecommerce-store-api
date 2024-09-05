@@ -8,3 +8,7 @@ RETURNING *;
 SELECT EXISTS (
     SELECT 1 FROM reviews WHERE user_id = $1 AND product_id = $2
 );
+
+-- name: GetProductReviews :many
+SELECT * FROM reviews
+WHERE product_id = $1;

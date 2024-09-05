@@ -13,6 +13,44 @@ import (
 	"github.com/google/uuid"
 )
 
+const getProductReviews = `-- name: GetProductReviews :many
+SELECT id, title, review_text, rating, product_id, user_id, deleted, created_at, updated_at FROM reviews
+WHERE product_id = $1
+`
+
+func (q *Queries) GetProductReviews(ctx context.Context, productID uuid.UUID) ([]Review, error) {
+	rows, err := q.db.QueryContext(ctx, getProductReviews, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Review
+	for rows.Next() {
+		var i Review
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.ReviewText,
+			&i.Rating,
+			&i.ProductID,
+			&i.UserID,
+			&i.Deleted,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const hasUserReviewedProduct = `-- name: HasUserReviewedProduct :one
 SELECT EXISTS (
     SELECT 1 FROM reviews WHERE user_id = $1 AND product_id = $2

@@ -24,6 +24,16 @@ func NewProductService(db *database.Queries) *ProductService {
 	}
 }
 
+func (s *ProductService) ProductExists(ctx context.Context, id uuid.UUID) (bool, error) {
+	exists, err := s.db.ProductExists(ctx, id)
+	if err != nil {
+		s.logger.Error("failed to check if product exists", zap.Error(err), zap.String("productID", id.String()))
+		return false, fmt.Errorf("failed to check if product exists: %w", err)
+	}
+
+	return exists, nil
+}
+
 func (s *ProductService) GetProduct(ctx context.Context, id uuid.UUID) (models.Product, error) {
 	product, err := s.db.GetProduct(ctx, id)
 	if err != nil {

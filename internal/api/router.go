@@ -34,7 +34,7 @@ func SetupRouter(db *database.Queries) http.Handler {
 
 	authHandler := handlers.NewAuthHandler(userSrv)
 	productHandler := handlers.NewProductHandler(productSrv)
-	reviewHander := handlers.NewReviewHandler(reviewSrv)
+	reviewHander := handlers.NewReviewHandler(reviewSrv, productSrv)
 	// TODO: if logged in and logging request is sent, redirect user to home page or profile
 
 	r.Group(func(r chi.Router) {
@@ -46,6 +46,8 @@ func SetupRouter(db *database.Queries) http.Handler {
 
 		r.Get("/products/categories", productHandler.GetProductCategories)
 		r.Get("/products/categories/{id}", productHandler.GetProductsByCategory)
+
+		r.Get("/products/{id}/reviews", reviewHander.GetProductReviews)
 	})
 
 	r.Group(func(r chi.Router) {

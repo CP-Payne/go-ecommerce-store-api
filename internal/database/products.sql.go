@@ -216,3 +216,16 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]P
 	}
 	return items, nil
 }
+
+const productExists = `-- name: ProductExists :one
+SELECT EXISTS (
+    SELECT 1 FROM products WHERE id = $1
+)
+`
+
+func (q *Queries) ProductExists(ctx context.Context, id uuid.UUID) (bool, error) {
+	row := q.db.QueryRowContext(ctx, productExists, id)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
