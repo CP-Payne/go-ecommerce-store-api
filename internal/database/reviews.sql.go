@@ -15,7 +15,7 @@ import (
 
 const getProductReviews = `-- name: GetProductReviews :many
 SELECT id, title, review_text, rating, product_id, user_id, deleted, created_at, updated_at FROM reviews
-WHERE product_id = $1
+WHERE product_id = $1 AND deleted IS NOT true
 `
 
 func (q *Queries) GetProductReviews(ctx context.Context, productID uuid.UUID) ([]Review, error) {
@@ -53,7 +53,7 @@ func (q *Queries) GetProductReviews(ctx context.Context, productID uuid.UUID) ([
 
 const getReviewByUserAndProduct = `-- name: GetReviewByUserAndProduct :one
 SELECT id, title, review_text, rating, product_id, user_id, deleted, created_at, updated_at FROM reviews
-WHERE user_id = $1 AND product_id = $2
+WHERE user_id = $1 AND product_id = $2 AND deleted IS NOT true
 `
 
 type GetReviewByUserAndProductParams struct {
@@ -80,7 +80,7 @@ func (q *Queries) GetReviewByUserAndProduct(ctx context.Context, arg GetReviewBy
 
 const hasUserReviewedProduct = `-- name: HasUserReviewedProduct :one
 SELECT EXISTS (
-    SELECT 1 FROM reviews WHERE user_id = $1 AND product_id = $2
+    SELECT 1 FROM reviews WHERE user_id = $1 AND product_id = $2 AND deleted IS NOT true
 )
 `
 

@@ -6,16 +6,16 @@ RETURNING *;
 
 -- name: HasUserReviewedProduct :one
 SELECT EXISTS (
-    SELECT 1 FROM reviews WHERE user_id = $1 AND product_id = $2
+    SELECT 1 FROM reviews WHERE user_id = $1 AND product_id = $2 AND deleted IS NOT true
 );
 
 -- name: GetProductReviews :many
 SELECT * FROM reviews
-WHERE product_id = $1;
+WHERE product_id = $1 AND deleted IS NOT true;
 
 -- name: GetReviewByUserAndProduct :one 
 SELECT * FROM reviews
-WHERE user_id = $1 AND product_id = $2;
+WHERE user_id = $1 AND product_id = $2 AND deleted IS NOT true;
 
 -- name: SetReviewStatusDeleted :exec
 UPDATE reviews
