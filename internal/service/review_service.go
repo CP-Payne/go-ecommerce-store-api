@@ -105,3 +105,56 @@ func (s *ReviewService) DeleteReview(ctx context.Context, userID, productID uuid
 	}
 	return nil
 }
+
+func (s *ReviewService) IsReviewOwner(ctx context.Context, reviewID, userID uuid.UUID) (bool, error) {
+	isOwner, err := s.db.IsReviewOwner(ctx, database.IsReviewOwnerParams{
+		ID:     reviewID,
+		UserID: userID,
+	})
+	if err != nil {
+		s.logger.Error("failed to determine review owner", zap.Error(err),
+			zap.String("reviewID", reviewID.String()), zap.String("userID", userID.String()))
+
+		return false, fmt.Errorf("failed to determine review owner: %w", apperrors.ErrInternal)
+	}
+
+	return isOwner, err
+}
+
+func (s *ReviewService) UpdateReview(ctx context.Context, userID, productID uuid.UUID, title, reviewText string, rating int) (models.Review, error) {
+	reviewed, err := s.db.HasUserReviewedProduct(ctx, database.HasUserReviewedProductParams{
+		UserID:    userID,
+		ProductID: productID,
+	})
+	if err != nil {
+		s.logger.Error("failed to check if user already reviewed product", zap.Error(err), zap.String("userID", userID.String()),
+			zap.String("productID", productID.String()))
+		return models.Review{}, fmt.Errorf("failed to determine if user already reviewed product: %w", apperrors.ErrInternal)
+	}
+
+	if !reviewed {
+		return models.Review{}, fmt.Errorf("user has not reviewed the product: %w", apperrors.ErrNotFound)
+	}
+
+	review, err := s.db.UpdateUserReview(ctx, database.UpdateUserReviewParams{
+		Title: sql.NullString{
+			String: title,
+			Valid:  true,
+		},
+		UpdatedAt: time.Now(),
+		ReviewText: sql.NullString{
+			String: reviewText,
+			Valid:  true,
+		},
+		Rating:    int32(rating),
+		UserID:    userID,
+		ProductID: productID,
+	})
+	if err != nil {
+		s.logger.Error("failed to update user review", zap.Error(err),
+			zap.String("userID", userID.String()), zap.String("productID", productID.String()))
+
+		return models.Review{}, fmt.Errorf("failed to update user review: %w", apperrors.ErrInternal)
+	}
+	return models.DatabaseReviewToReview(review), nil
+}

@@ -142,6 +142,24 @@ func (q *Queries) InsertReview(ctx context.Context, arg InsertReviewParams) (Rev
 	return i, err
 }
 
+const isReviewOwner = `-- name: IsReviewOwner :one
+SELECT EXISTS (
+    SELECT 1 FROM reviews WHERE id = $1 AND user_id = $2 
+)
+`
+
+type IsReviewOwnerParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) IsReviewOwner(ctx context.Context, arg IsReviewOwnerParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isReviewOwner, arg.ID, arg.UserID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const setReviewStatusDeleted = `-- name: SetReviewStatusDeleted :exec
 UPDATE reviews
     SET deleted = true
@@ -156,4 +174,44 @@ type SetReviewStatusDeletedParams struct {
 func (q *Queries) SetReviewStatusDeleted(ctx context.Context, arg SetReviewStatusDeletedParams) error {
 	_, err := q.db.ExecContext(ctx, setReviewStatusDeleted, arg.UserID, arg.ProductID)
 	return err
+}
+
+const updateUserReview = `-- name: UpdateUserReview :one
+UPDATE reviews
+    SET title = $1, review_text = $2, rating = $3, updated_at=$4
+    WHERE user_id=$5 AND product_id=$6 AND deleted IS NOT true
+    RETURNING id, title, review_text, rating, product_id, user_id, deleted, created_at, updated_at
+`
+
+type UpdateUserReviewParams struct {
+	Title      sql.NullString
+	ReviewText sql.NullString
+	Rating     int32
+	UpdatedAt  time.Time
+	UserID     uuid.UUID
+	ProductID  uuid.UUID
+}
+
+func (q *Queries) UpdateUserReview(ctx context.Context, arg UpdateUserReviewParams) (Review, error) {
+	row := q.db.QueryRowContext(ctx, updateUserReview,
+		arg.Title,
+		arg.ReviewText,
+		arg.Rating,
+		arg.UpdatedAt,
+		arg.UserID,
+		arg.ProductID,
+	)
+	var i Review
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.ReviewText,
+		&i.Rating,
+		&i.ProductID,
+		&i.UserID,
+		&i.Deleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
