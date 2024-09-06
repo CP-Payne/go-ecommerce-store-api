@@ -51,6 +51,33 @@ func (q *Queries) GetProductReviews(ctx context.Context, productID uuid.UUID) ([
 	return items, nil
 }
 
+const getReviewByUserAndProduct = `-- name: GetReviewByUserAndProduct :one
+SELECT id, title, review_text, rating, product_id, user_id, deleted, created_at, updated_at FROM reviews
+WHERE user_id = $1 AND product_id = $2
+`
+
+type GetReviewByUserAndProductParams struct {
+	UserID    uuid.UUID
+	ProductID uuid.UUID
+}
+
+func (q *Queries) GetReviewByUserAndProduct(ctx context.Context, arg GetReviewByUserAndProductParams) (Review, error) {
+	row := q.db.QueryRowContext(ctx, getReviewByUserAndProduct, arg.UserID, arg.ProductID)
+	var i Review
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.ReviewText,
+		&i.Rating,
+		&i.ProductID,
+		&i.UserID,
+		&i.Deleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const hasUserReviewedProduct = `-- name: HasUserReviewedProduct :one
 SELECT EXISTS (
     SELECT 1 FROM reviews WHERE user_id = $1 AND product_id = $2

@@ -48,6 +48,7 @@ func SetupRouter(db *database.Queries) http.Handler {
 		r.Get("/products/categories/{id}", productHandler.GetProductsByCategory)
 
 		r.Get("/products/{id}/reviews", reviewHander.GetProductReviews)
+		r.Get("/products/{productID}/reviews/{userID}", reviewHander.GetUserReviewForProduct)
 	})
 
 	r.Group(func(r chi.Router) {

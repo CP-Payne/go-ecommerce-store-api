@@ -100,6 +100,7 @@ func (h *ReviewHandler) AddReview(w http.ResponseWriter, r *http.Request) {
 	userID, err := uuid.Parse(strUserID)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+		return
 	}
 
 	reviewInput := &ReviewInput{}
@@ -140,4 +141,46 @@ func (h *ReviewHandler) AddReview(w http.ResponseWriter, r *http.Request) {
 		Msg:    "review added successfully",
 		Review: review,
 	})
+}
+
+func (h *ReviewHandler) GetUserReviewForProduct(w http.ResponseWriter, r *http.Request) {
+	// Get productID from url parameter
+	strProductID := chi.URLParam(r, "productID")
+	productID, err := uuid.Parse(strProductID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "invalid product id")
+		return
+	}
+
+	productExists, err := h.srvProduct.ProductExists(r.Context(), productID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "could not determine if product exists")
+		return
+	}
+
+	if !productExists {
+		utils.RespondWithError(w, http.StatusBadRequest, "productID provided does not exist")
+		return
+	}
+
+	strUserID := chi.URLParam(r, "userID")
+	userID, err := uuid.Parse(strUserID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "invalid user id")
+		return
+	}
+	review, err := h.srvReview.GetReviewByUserAndProduct(r.Context(), userID, productID)
+	if err != nil {
+		if errors.Is(err, apperrors.ErrNotFound) {
+			utils.RespondWithError(w, http.StatusNotFound, "user review not found for product")
+			return
+		}
+		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+		return
+	}
+
+	// TODO: return user's name instead of the ID
+	// TODO: Do not return entire review object
+
+	utils.RespondWithJson(w, http.StatusOK, review)
 }
