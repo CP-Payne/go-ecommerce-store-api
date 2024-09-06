@@ -87,7 +87,21 @@ func (s *ReviewService) GetReviewByUserAndProduct(ctx context.Context, userID, p
 		}
 		s.logger.Error("failed to retrieve user review for product", zap.Error(err),
 			zap.String("userID", userID.String()), zap.String("productID", productID.String()))
-		return models.Review{}, fmt.Errorf("failed to retrieve user review for product: %w", err)
+		// TODO: update all errors and return apperrors
+		return models.Review{}, fmt.Errorf("failed to retrieve user review for product: %w", apperrors.ErrInternal)
 	}
 	return models.DatabaseReviewToReview(dbReview), nil
+}
+
+func (s *ReviewService) DeleteReview(ctx context.Context, userID, productID uuid.UUID) error {
+	err := s.db.SetReviewStatusDeleted(ctx, database.SetReviewStatusDeletedParams{
+		UserID:    userID,
+		ProductID: productID,
+	})
+	if err != nil {
+		s.logger.Error("failed to change review status to deleted", zap.Error(err),
+			zap.String("userID", userID.String()), zap.String("productID", productID.String()))
+		return fmt.Errorf("failed to change review status to deleted: %w", apperrors.ErrInternal)
+	}
+	return nil
 }

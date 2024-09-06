@@ -16,3 +16,8 @@ WHERE product_id = $1;
 -- name: GetReviewByUserAndProduct :one 
 SELECT * FROM reviews
 WHERE user_id = $1 AND product_id = $2;
+
+-- name: SetReviewStatusDeleted :exec
+UPDATE reviews
+    SET deleted = true
+    WHERE user_id=$1 AND product_id=$2;

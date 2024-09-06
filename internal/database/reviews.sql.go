@@ -141,3 +141,19 @@ func (q *Queries) InsertReview(ctx context.Context, arg InsertReviewParams) (Rev
 	)
 	return i, err
 }
+
+const setReviewStatusDeleted = `-- name: SetReviewStatusDeleted :exec
+UPDATE reviews
+    SET deleted = true
+    WHERE user_id=$1 AND product_id=$2
+`
+
+type SetReviewStatusDeletedParams struct {
+	UserID    uuid.UUID
+	ProductID uuid.UUID
+}
+
+func (q *Queries) SetReviewStatusDeleted(ctx context.Context, arg SetReviewStatusDeletedParams) error {
+	_, err := q.db.ExecContext(ctx, setReviewStatusDeleted, arg.UserID, arg.ProductID)
+	return err
+}

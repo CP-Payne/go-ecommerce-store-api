@@ -184,3 +184,51 @@ func (h *ReviewHandler) GetUserReviewForProduct(w http.ResponseWriter, r *http.R
 
 	utils.RespondWithJson(w, http.StatusOK, review)
 }
+
+func (h *ReviewHandler) DeleteReview(w http.ResponseWriter, r *http.Request) {
+	// Get productID from url parameter
+	strProductID := chi.URLParam(r, "id")
+	productID, err := uuid.Parse(strProductID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "invalid product id")
+		return
+	}
+
+	productExists, err := h.srvProduct.ProductExists(r.Context(), productID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "could not determine if product exists")
+		return
+	}
+
+	if !productExists {
+		utils.RespondWithError(w, http.StatusBadRequest, "productID provided does not exist")
+		return
+	}
+
+	// Get UserID from jwt (request context)
+	_, claims, _ := jwtauth.FromContext(r.Context())
+	strUserID := ""
+	if claims["id"] != nil {
+		strUserID = claims["id"].(string)
+	} else {
+		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+		return
+	}
+	userID, err := uuid.Parse(strUserID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+		return
+	}
+
+	err = h.srvReview.DeleteReview(r.Context(), userID, productID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "failed to delete review")
+		return
+	}
+	type successResponse struct {
+		Msg string `json:"msg"`
+	}
+	utils.RespondWithJson(w, http.StatusOK, successResponse{
+		Msg: "review deleted",
+	})
+}

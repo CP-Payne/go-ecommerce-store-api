@@ -55,6 +55,7 @@ func SetupRouter(db *database.Queries) http.Handler {
 		r.Use(jwtauth.Verifier(config.GetTokenAuth()))
 		r.Use(jwtauth.Authenticator)
 		r.Post("/products/{id}/reviews", reviewHander.AddReview)
+		r.Delete("/products/{id}/reviews", reviewHander.DeleteReview)
 	})
 
 	r.Get("/home", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
