@@ -42,13 +42,12 @@ func (h *ReviewHandler) GetProductReviews(w http.ResponseWriter, r *http.Request
 	productID, err := uuid.Parse(strProductID)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "invalid product id")
-		// TODO: Test remove below
 		return
 	}
 
 	productExists, err := h.srvProduct.ProductExists(r.Context(), productID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "failed to retrieve product reviews")
+		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
 		return
 	}
 
@@ -79,7 +78,7 @@ func (h *ReviewHandler) AddReview(w http.ResponseWriter, r *http.Request) {
 
 	productExists, err := h.srvProduct.ProductExists(r.Context(), productID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "could not determine if product exists")
+		utils.RespondWithError(w, http.StatusInternalServerError, "failed to add review")
 		return
 	}
 

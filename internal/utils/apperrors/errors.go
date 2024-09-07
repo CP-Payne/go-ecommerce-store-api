@@ -8,10 +8,11 @@ import (
 )
 
 var (
-	ErrConflict = errors.New("conflict")
-	ErrInternal = errors.New("internal error")
-	ErrNotFound = errors.New("resource not found")
-	ErrAuthCode = errors.New("auth code")
+	ErrConflict  = errors.New("conflict")
+	ErrInternal  = errors.New("internal error")
+	ErrNotFound  = errors.New("resource not found")
+	ErrAuthCode  = errors.New("auth code")
+	ErrParseUUID = errors.New("could not parse UUID")
 )
 
 func IsPqError(err error, code pq.ErrorCode) bool {
