@@ -2,6 +2,7 @@
 CREATE TABLE carts (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users(id),
+    status VARCHAR(50) NOT NULL DEFAULT 'active',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -16,5 +17,5 @@ CREATE TABLE cart_items (
 
 
 -- +goose Down
-DROP TABLE carts;
 DROP TABLE cart_items;
+DROP TABLE carts;

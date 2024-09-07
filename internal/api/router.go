@@ -18,23 +18,18 @@ func SetupRouter(db *database.Queries) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
-	// r.Use(cors.Handler(cors.Options{
-	// 	AllowedOrigins:   []string{"*"},
-	// 	AllowedMethods:   []string{"GET", "PUT", "POST", "DELETE", "OPTION"},
-	// 	AllowedHeaders:   []string{"*"},
-	// 	AllowCredentials: true,
-	// 	MaxAge:           300, // Maximum value not ignored by any of major browsers
-	// }))
 
 	r.Use(cmid.CorsMiddleware)
 
 	userSrv := service.NewUserService(db)
 	productSrv := service.NewProductService(db)
 	reviewSrv := service.NewReviewService(db)
+	cartSrv := service.NewCartService(db)
 
 	authHandler := handlers.NewAuthHandler(userSrv)
 	productHandler := handlers.NewProductHandler(productSrv)
 	reviewHander := handlers.NewReviewHandler(reviewSrv, productSrv)
+	cartHandler := handlers.NewCartHandler(cartSrv)
 	// TODO: if logged in and logging request is sent, redirect user to home page or profile
 
 	r.Group(func(r chi.Router) {
@@ -57,6 +52,10 @@ func SetupRouter(db *database.Queries) http.Handler {
 		r.Post("/products/{id}/reviews", reviewHander.AddReview)
 		r.Patch("/products/{id}/reviews", reviewHander.UpdateUserReview)
 		r.Delete("/products/{id}/reviews", reviewHander.DeleteReview)
+
+		r.Get("/cart", cartHandler.GetCart)
+		r.Post("/cart/add", cartHandler.AddToCart)
+		r.Post("/cart/remove", cartHandler.RemoveFromCart)
 	})
 
 	r.Get("/home", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
