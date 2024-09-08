@@ -10,13 +10,13 @@ import (
 type Review struct {
 	ID         uuid.UUID `json:"id,omitempty"`
 	Title      string    `json:"title,omitempty"`
-	ReviewText string    `json:"review_text,omitempty"`
+	ReviewText string    `json:"reviewText,omitempty"`
 	Rating     int       `json:"rating,omitempty"`
-	ProductID  uuid.UUID `json:"product_id,omitempty"`
-	UserID     uuid.UUID `json:"user_id,omitempty"`
+	ProductID  uuid.UUID `json:"productId,omitempty"`
+	UserID     uuid.UUID `json:"userId,omitempty"`
 	Deleted    bool      `json:"deleted,omitempty"`
-	CreatedAt  time.Time `json:"created_at,omitempty"`
-	UpdatedAt  time.Time `json:"updated_at,omitempty"`
+	CreatedAt  time.Time `json:"createdAt,omitempty"`
+	UpdatedAt  time.Time `json:"updatedAt,omitempty"`
 }
 
 // Database Review to Review mappings
