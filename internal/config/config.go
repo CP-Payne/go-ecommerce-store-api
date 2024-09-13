@@ -15,6 +15,12 @@ type Config struct {
 	Logger *zap.Logger
 	Port   string
 	DB     *database.Queries
+	PP     *PaymentProcessor
+}
+
+type PaymentProcessor struct {
+	ClientID     string
+	ClientSecret string
 }
 
 func New() *Config {
@@ -40,9 +46,16 @@ func New() *Config {
 		logger.Fatal("failed to open database connection", zap.Error(err))
 	}
 
+	ppClientID := os.Getenv("PAYPAL_SECRET")
+	ppClientSecret := os.Getenv("PAYPAL_SECRET")
+
 	return &Config{
 		Port:   port,
 		Logger: logger,
 		DB:     database.New(db),
+		PP: &PaymentProcessor{
+			ClientID:     ppClientID,
+			ClientSecret: ppClientSecret,
+		},
 	}
 }

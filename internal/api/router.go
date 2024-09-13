@@ -5,7 +5,6 @@ import (
 
 	"github.com/CP-Payne/ecomstore/internal/api/handlers"
 	"github.com/CP-Payne/ecomstore/internal/config"
-	"github.com/CP-Payne/ecomstore/internal/database"
 	"github.com/CP-Payne/ecomstore/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -14,17 +13,17 @@ import (
 	cmid "github.com/CP-Payne/ecomstore/internal/api/middleware"
 )
 
-func SetupRouter(db *database.Queries) http.Handler {
+func SetupRouter(cfg *config.Config) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
 
 	r.Use(cmid.CorsMiddleware)
 
-	userSrv := service.NewUserService(db)
-	productSrv := service.NewProductService(db)
-	reviewSrv := service.NewReviewService(db)
-	cartSrv := service.NewCartService(db)
+	userSrv := service.NewUserService(cfg.DB)
+	productSrv := service.NewProductService(cfg.DB)
+	reviewSrv := service.NewReviewService(cfg.DB)
+	cartSrv := service.NewCartService(cfg.DB)
 
 	authHandler := handlers.NewAuthHandler(userSrv)
 	productHandler := handlers.NewProductHandler(productSrv)
