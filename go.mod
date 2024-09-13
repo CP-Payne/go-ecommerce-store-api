@@ -1,6 +1,8 @@
 module github.com/CP-Payne/ecomstore
 
-go 1.22.5
+go 1.23
+
+toolchain go1.23.1
 
 require (
 	github.com/go-chi/chi v1.5.1
@@ -23,5 +25,6 @@ require (
 	github.com/lestrrat-go/jwx v1.1.0 // indirect
 	github.com/lestrrat-go/option v1.0.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/plutov/paypal/v4 v4.11.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 )
