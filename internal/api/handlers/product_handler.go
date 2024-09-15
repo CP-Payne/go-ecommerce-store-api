@@ -30,7 +30,7 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 	strID := chi.URLParam(r, "id")
 	id, err := uuid.Parse(strID)
 	if err != nil {
-		http.Error(w, "invalid product id", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "invalid product id")
 		return
 	}
 

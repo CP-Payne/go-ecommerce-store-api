@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/jwtauth"
+	"go.uber.org/zap"
 
 	cmid "github.com/CP-Payne/ecomstore/internal/api/middleware"
 )
@@ -20,15 +21,22 @@ func SetupRouter(cfg *config.Config) http.Handler {
 
 	r.Use(cmid.CorsMiddleware)
 
+	paypalProcessor, err := service.NewPayPalProcessor(cfg.PaymentProcessor)
+	if err != nil {
+		cfg.Logger.Fatal("failed to setup router", zap.Error(err))
+	}
+
 	userSrv := service.NewUserService(cfg.DB)
 	productSrv := service.NewProductService(cfg.DB)
 	reviewSrv := service.NewReviewService(cfg.DB)
 	cartSrv := service.NewCartService(cfg.DB)
+	paymentSrv := service.NewPaymentService(cfg.DB, paypalProcessor)
 
 	authHandler := handlers.NewAuthHandler(userSrv)
 	productHandler := handlers.NewProductHandler(productSrv)
 	reviewHander := handlers.NewReviewHandler(reviewSrv, productSrv)
 	cartHandler := handlers.NewCartHandler(cartSrv)
+	paymentHandler := handlers.NewPaymentHandler(productSrv, paymentSrv)
 	// TODO: if logged in and logging request is sent, redirect user to home page or profile
 
 	r.Group(func(r chi.Router) {
@@ -37,6 +45,9 @@ func SetupRouter(cfg *config.Config) http.Handler {
 
 		r.Get("/products", productHandler.GetAllProducts)
 		r.Get("/products/{id}", productHandler.GetProduct)
+
+		r.Post("/products/create-order", paymentHandler.CreateOrder)
+		r.Get("/products/complete-order", paymentHandler.CaptureOrder)
 
 		r.Get("/products/categories", productHandler.GetProductCategories)
 		r.Get("/products/categories/{id}", productHandler.GetProductsByCategory)

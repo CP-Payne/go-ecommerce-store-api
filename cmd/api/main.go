@@ -22,7 +22,7 @@ func main() {
 
 	signal.Notify(killSignal, os.Interrupt, syscall.SIGTERM)
 
-	r := api.SetupRouter(cfg.DB)
+	r := api.SetupRouter(cfg)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.Port),

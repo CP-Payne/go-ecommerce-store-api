@@ -12,15 +12,17 @@ import (
 )
 
 type Config struct {
-	Logger *zap.Logger
-	Port   string
-	DB     *database.Queries
-	PP     *PaymentProcessor
+	Logger           *zap.Logger
+	Port             string
+	DB               *database.Queries
+	PaymentProcessor *ProcessorConfig
 }
 
-type PaymentProcessor struct {
+type ProcessorConfig struct {
 	ClientID     string
 	ClientSecret string
+	ReturnUrl    string
+	CancelUrl    string
 }
 
 func New() *Config {
@@ -46,16 +48,20 @@ func New() *Config {
 		logger.Fatal("failed to open database connection", zap.Error(err))
 	}
 
-	ppClientID := os.Getenv("PAYPAL_SECRET")
+	ppClientID := os.Getenv("PAYPAL_CLIENT")
 	ppClientSecret := os.Getenv("PAYPAL_SECRET")
+	paypalReturnUrl := os.Getenv("PAYPAL_RETURN_URL")
+	paypalCancelUrl := os.Getenv("PAYPAL_CANCEL_URL")
 
 	return &Config{
 		Port:   port,
 		Logger: logger,
 		DB:     database.New(db),
-		PP: &PaymentProcessor{
+		PaymentProcessor: &ProcessorConfig{
 			ClientID:     ppClientID,
 			ClientSecret: ppClientSecret,
+			ReturnUrl:    paypalReturnUrl,
+			CancelUrl:    paypalCancelUrl,
 		},
 	}
 }
