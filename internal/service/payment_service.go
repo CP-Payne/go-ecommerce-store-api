@@ -25,8 +25,16 @@ func NewPaymentService(db *database.Queries, processor models.PaymentProcessor) 
 	}
 }
 
-func (p *PaymentService) CreateOrder(ctx context.Context, product *models.Product, quantity int) (*models.OrderResult, error) {
+func (p *PaymentService) CreateProductOrder(ctx context.Context, product *models.Product, quantity int) (*models.OrderResult, error) {
 	orderResult, err := p.paymentProcessor.CreateProductOrder(ctx, product, quantity, shippingPrice)
+	if err != nil {
+		return nil, err
+	}
+	return orderResult, nil
+}
+
+func (p *PaymentService) CreateCartOrder(ctx context.Context, cart *models.Cart) (*models.OrderResult, error) {
+	orderResult, err := p.paymentProcessor.CreateCartOrder(ctx, cart, shippingPrice)
 	if err != nil {
 		return nil, err
 	}
