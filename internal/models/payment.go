@@ -9,6 +9,7 @@ type PaymentProcessor interface {
 	CreateProductOrder(ctx context.Context, product *Product, quantity int, shippingPrice float32) (*OrderResult, error)
 	CreateCartOrder(ctx context.Context, cart *Cart, shippingPrice float32) (*OrderResult, error)
 	CaptureOrder(ctx context.Context, orderID string) error
+	GetOrderDetails(ctx context.Context, orderID string) error
 	// CompleteOrder(orderId int)
 }
 
