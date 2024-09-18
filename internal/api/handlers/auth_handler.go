@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"github.com/CP-Payne/ecomstore/internal/config"
+	"github.com/CP-Payne/ecomstore/internal/domain/user"
 	"github.com/CP-Payne/ecomstore/internal/service"
 	"github.com/CP-Payne/ecomstore/internal/utils"
 	"github.com/CP-Payne/ecomstore/internal/utils/apperrors"
 	"github.com/CP-Payne/ecomstore/internal/utils/hashing"
+	"github.com/CP-Payne/ecomstore/pkg/errsx"
 	"go.uber.org/zap"
 )
 
@@ -47,6 +49,28 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// TODO: Perform validation on email, name and password
+	var err error
+	var errs errsx.Map
+
+	_, err = user.ValidateEmail(params.Email)
+	if err != nil {
+		errs.Set("email", err)
+	}
+
+	_, err = user.ValidateName(params.Name)
+	if err != nil {
+		errs.Set("name", err)
+	}
+	_, err = user.ValidatePassword(params.Password)
+	if err != nil {
+		errs.Set("password", err)
+	}
+
+	if errs != nil {
+		// If the map is not nil, we have some errors.
+		utils.RespondWithJson(w, http.StatusBadRequest, errs)
+		return
+	}
 
 	user, err := h.srv.CreateUser(r.Context(), params.Email, params.Name, params.Password)
 	if err != nil {
