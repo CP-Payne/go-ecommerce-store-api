@@ -120,6 +120,11 @@ func (h *PaymentHandler) CreateCartOrder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// err = h.srvPayment.GetOrderDetails(r.Context(), orderResult.ID)
+	// if err != nil {
+	// 	h.logger.Debug("failed to retrieve order details", zap.Error(err))
+	// }
+
 	utils.RespondWithJson(w, http.StatusOK, orderResult)
 }
 
@@ -136,6 +141,11 @@ func (h *PaymentHandler) CaptureOrder(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusInternalServerError, "failed to complete payment")
 		return
 	}
+
+	// err = h.srvPayment.GetOrderDetails(r.Context(), orderID)
+	// if err != nil {
+	// 	h.logger.Debug("failed to retrieve order details", zap.Error(err))
+	// }
 
 	type successResponse struct {
 		Msg string `json:"msg"`

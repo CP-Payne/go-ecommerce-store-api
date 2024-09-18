@@ -48,7 +48,6 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusBadRequest, "passwords do not match")
 		return
 	}
-	// TODO: Perform validation on email, name and password
 	var err error
 	var errs errsx.Map
 
@@ -100,7 +99,6 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.RespondWithJson(w, http.StatusCreated, &response)
-	// http.Redirect(w, r, "/home", http.StatusSeeOther)
 }
 
 func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {

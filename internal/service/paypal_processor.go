@@ -257,3 +257,15 @@ func (p *PayPalProcessor) getCartTotal(cart *models.Cart) (float32, error) {
 
 	return cartTotal, nil
 }
+
+func (p *PayPalProcessor) GetOrderDetails(ctx context.Context, orderID string) error {
+	order, err := p.client.GetOrder(ctx, orderID)
+	if err != nil {
+		p.logger.Error("failed to retrieve order details", zap.Error(err))
+		return fmt.Errorf("failed to retrieve order details: %w", err)
+	}
+
+	p.logger.Debug("GetOrderDetails: ", zap.Any("ORDER", order))
+
+	return nil
+}

@@ -39,7 +39,8 @@ type Order struct {
 	TotalAmount   string
 	Status        string
 	PaymentMethod string
-	PaymentID     string
+	PayerID       sql.NullString
+	ShippingPrice string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }
