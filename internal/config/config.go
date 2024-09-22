@@ -15,6 +15,7 @@ type Config struct {
 	Logger           *zap.Logger
 	Port             string
 	DB               *database.Queries
+	SqlDB            *sql.DB
 	PaymentProcessor *ProcessorConfig
 }
 
@@ -56,6 +57,7 @@ func New() *Config {
 	return &Config{
 		Port:   port,
 		Logger: logger,
+		SqlDB:  db,
 		DB:     database.New(db),
 		PaymentProcessor: &ProcessorConfig{
 			ClientID:     ppClientID,

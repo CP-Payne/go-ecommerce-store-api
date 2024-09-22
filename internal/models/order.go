@@ -34,6 +34,7 @@ type Order struct {
 
 type OrderItem struct {
 	ProductID uuid.UUID
+	Name      string
 	Quantity  int
 	Price     float32
 }
