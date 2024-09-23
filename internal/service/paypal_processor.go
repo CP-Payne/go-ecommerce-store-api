@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/CP-Payne/ecomstore/internal/config"
 	"github.com/CP-Payne/ecomstore/internal/models"
@@ -41,13 +40,65 @@ func NewPayPalProcessor(pconf *config.ProcessorConfig) (*PayPalProcessor, error)
 		logger.Error("failed to create paypal client", zap.Error(err))
 		return nil, fmt.Errorf("failed to create paypal client: %w", err)
 	}
-	client.SetLog(os.Stdout)
+	// client.SetLog(os.Stdout)
 
 	return &PayPalProcessor{
 		logger:          logger,
 		client:          client,
 		processorConfig: pconf,
 	}, nil
+}
+
+func (p *PayPalProcessor) CreateProcessorOrder(ctx context.Context, order *models.Order) (*models.OrderResult, error) {
+	items, err := p.orderItemsToPaypalItems(order.OrderItems)
+	if err != nil {
+		p.logger.Error("failed to create order", zap.Error(err))
+		return nil, fmt.Errorf("failed to create order: %w", err)
+	}
+
+	p.logger.Debug("items", zap.Any("items", items))
+	units := []paypal.PurchaseUnitRequest{
+		{
+			Amount: &paypal.PurchaseUnitAmount{
+				Currency: "USD",
+				Value:    floatToString(order.OrderTotal),
+				Breakdown: &paypal.PurchaseUnitAmountBreakdown{
+					ItemTotal: &paypal.Money{
+						Currency: "USD",
+						Value:    floatToString(order.ProductTotal),
+					},
+					Shipping: &paypal.Money{
+						Currency: "USD",
+						Value:    floatToString(order.ShippingPrice),
+					},
+				},
+			},
+			Items: items,
+		},
+	}
+
+	// p.logger.Debug("full units", zap.Any("units", units))
+
+	processorOrder, err := p.client.CreateOrder(ctx, paypal.OrderIntentCapture, units, paymentSource, nil)
+	if err != nil {
+		p.logger.Error("failed to create order", zap.Error(err), zap.String("orderID", order.ID.String()))
+		return nil, fmt.Errorf("failed to create order: %w", err)
+	}
+	orderLinks := processorOrder.Links
+	var approveLink string
+
+	for _, l := range orderLinks {
+		if l.Rel == "payer-action" {
+			approveLink = l.Href
+		}
+	}
+
+	orderResult := models.OrderResult{
+		ID:          processorOrder.ID,
+		ApproveLink: approveLink,
+		Status:      "",
+	}
+	return &orderResult, nil
 }
 
 // TODO: On successfull purchase, clear users cart
@@ -109,9 +160,11 @@ func (p *PayPalProcessor) CreateCartOrder(ctx context.Context, cart *models.Cart
 	}
 
 	orderResult := models.OrderResult{
-		ID:          order.ID,
-		ApproveLink: approveLink,
-		Status:      "",
+		ID:           order.ID,
+		ApproveLink:  approveLink,
+		Status:       "",
+		PaymentEmail: order.Payer.EmailAddress,
+		PayerID:      order.Payer.PayerID,
 	}
 	return &orderResult, nil
 }
@@ -173,17 +226,25 @@ func (p *PayPalProcessor) CreateProductOrder(ctx context.Context, product *model
 	return &orderResult, nil
 }
 
-func (p *PayPalProcessor) CaptureOrder(ctx context.Context, orderID string) error {
+func (p *PayPalProcessor) CaptureOrder(ctx context.Context, processorOrderID string) (*models.OrderResult, error) {
 	// TODO: Return orderResponse and save it to db
-	_, err := p.client.CaptureOrder(ctx, orderID, paypal.CaptureOrderRequest{
+	orderResponse, err := p.client.CaptureOrder(ctx, processorOrderID, paypal.CaptureOrderRequest{
 		PaymentSource: nil,
 	})
 	if err != nil {
 		p.logger.Error("failed to capture order", zap.Error(err))
-		return fmt.Errorf("failed to capture order: %w", err)
+		return &models.OrderResult{}, fmt.Errorf("failed to capture order: %w", err)
 	}
 
-	return nil
+	orderResult := models.OrderResult{
+		ID:           orderResponse.ID,
+		ApproveLink:  "",
+		Status:       orderResponse.Status,
+		PaymentEmail: orderResponse.Payer.EmailAddress,
+		PayerID:      orderResponse.Payer.PayerID,
+	}
+
+	return &orderResult, nil
 }
 
 // TODO: On successfull purchase, reduce stock
@@ -212,6 +273,29 @@ func (p *PayPalProcessor) cartToPaypalItems(cart *models.Cart) ([]paypal.Item, e
 				Value:    itemPriceStr,
 			},
 			Quantity: quantityStr,
+		}
+		paypalItems = append(paypalItems, paypalItem)
+	}
+
+	return paypalItems, nil
+}
+
+func (p *PayPalProcessor) orderItemsToPaypalItems(orderItems []models.OrderItem) ([]paypal.Item, error) {
+	if len(orderItems) <= 0 {
+		p.logger.Error("failed to convert orderItems to paypal items. no orderItems provided")
+		return nil, fmt.Errorf("failed to convert orderItems to paypal items: %w", errors.New("no order items"))
+	}
+
+	paypalItems := make([]paypal.Item, 0, len(orderItems))
+
+	for _, oi := range orderItems {
+		paypalItem := paypal.Item{
+			Name: oi.Name,
+			UnitAmount: &paypal.Money{
+				Currency: "USD",
+				Value:    floatToString(oi.Price),
+			},
+			Quantity: intToString(oi.Quantity),
 		}
 		paypalItems = append(paypalItems, paypalItem)
 	}
