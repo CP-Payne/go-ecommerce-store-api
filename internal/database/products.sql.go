@@ -229,3 +229,19 @@ func (q *Queries) ProductExists(ctx context.Context, id uuid.UUID) (bool, error)
 	err := row.Scan(&exists)
 	return exists, err
 }
+
+const updateStock = `-- name: UpdateStock :exec
+UPDATE products
+SET stock_quantity = stock_quantity - $2
+WHERE id = $1 AND stock_quantity >= $2
+`
+
+type UpdateStockParams struct {
+	ID            uuid.UUID
+	StockQuantity int32
+}
+
+func (q *Queries) UpdateStock(ctx context.Context, arg UpdateStockParams) error {
+	_, err := q.db.ExecContext(ctx, updateStock, arg.ID, arg.StockQuantity)
+	return err
+}

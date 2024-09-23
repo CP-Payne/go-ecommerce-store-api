@@ -15,8 +15,8 @@ import (
 
 const createOrder = `-- name: CreateOrder :one
 INSERT INTO orders(
-    id, user_id, product_total,order_total, status, payment_method, shipping_price, created_at, updated_at
-) VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9)
+    id, user_id, product_total,order_total, status, payment_method, shipping_price, cart_id, created_at, updated_at
+) VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING id
 `
 
@@ -28,6 +28,7 @@ type CreateOrderParams struct {
 	Status        string
 	PaymentMethod string
 	ShippingPrice string
+	CartID        uuid.NullUUID
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }
@@ -41,6 +42,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (uuid.
 		arg.Status,
 		arg.PaymentMethod,
 		arg.ShippingPrice,
+		arg.CartID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -75,7 +77,7 @@ func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams
 }
 
 const getOrderByID = `-- name: GetOrderByID :one
-SELECT id, user_id, processor_order_id, product_total, status, order_total, payment_method, payment_email, payer_id, shipping_price, created_at, updated_at FROM orders
+SELECT id, user_id, processor_order_id, product_total, status, order_total, payment_method, payment_email, payer_id, shipping_price, cart_id, created_at, updated_at FROM orders
 WHERE id = $1
 `
 
@@ -93,6 +95,7 @@ func (q *Queries) GetOrderByID(ctx context.Context, id uuid.UUID) (Order, error)
 		&i.PaymentEmail,
 		&i.PayerID,
 		&i.ShippingPrice,
+		&i.CartID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -100,7 +103,7 @@ func (q *Queries) GetOrderByID(ctx context.Context, id uuid.UUID) (Order, error)
 }
 
 const getOrderByProcessorOrderID = `-- name: GetOrderByProcessorOrderID :one
-SELECT id, user_id, processor_order_id, product_total, status, order_total, payment_method, payment_email, payer_id, shipping_price, created_at, updated_at FROM orders
+SELECT id, user_id, processor_order_id, product_total, status, order_total, payment_method, payment_email, payer_id, shipping_price, cart_id, created_at, updated_at FROM orders
 WHERE processor_order_id = $1
 `
 
@@ -118,6 +121,7 @@ func (q *Queries) GetOrderByProcessorOrderID(ctx context.Context, processorOrder
 		&i.PaymentEmail,
 		&i.PayerID,
 		&i.ShippingPrice,
+		&i.CartID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

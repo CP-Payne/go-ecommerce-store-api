@@ -44,6 +44,7 @@ type Order struct {
 	PaymentEmail     sql.NullString
 	PayerID          sql.NullString
 	ShippingPrice    string
+	CartID           uuid.NullUUID
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 }

@@ -32,7 +32,7 @@ func NewOrderService(db *database.Queries, sqlDB *sql.DB) *OrderService {
 	}
 }
 
-func (s *OrderService) CreateOrder(ctx context.Context, cart models.Cart) (models.Order, error) {
+func (s *OrderService) CreateOrder(ctx context.Context, cart models.Cart, tempCart bool) (models.Order, error) {
 	productTotal, err := s.getCartTotal(&cart)
 	if err != nil {
 		s.logger.Error("failed to calculate cart total", zap.Error(err))
@@ -40,6 +40,15 @@ func (s *OrderService) CreateOrder(ctx context.Context, cart models.Cart) (model
 	}
 
 	orderTotal := productTotal + globalShipping
+
+	cartID := uuid.NullUUID{
+		Valid: true,
+		UUID:  cart.ID,
+	}
+
+	if tempCart {
+		cartID.Valid = false
+	}
 
 	// Start transaction
 	tx, err := s.sqlDB.Begin()
@@ -64,6 +73,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, cart models.Cart) (model
 		ShippingPrice: floatToString(globalShipping),
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
+		CartID:        cartID,
 	})
 	if err != nil {
 		s.logger.Error("failed to create order", zap.Error(err))
@@ -168,6 +178,7 @@ func (s *OrderService) DatabaseOrderToOrder(ctx context.Context, orderRecord dat
 		PaymentEmail:     sqlNullStringToString(orderRecord.PaymentEmail),
 		PayerID:          sqlNullStringToString(orderRecord.PayerID),
 		ShippingPrice:    shippingPrice,
+		CartID:           nullUuidToUuid(orderRecord.CartID),
 		CreatedAt:        orderRecord.CreatedAt,
 		UpdatedAt:        orderRecord.UpdatedAt,
 	}

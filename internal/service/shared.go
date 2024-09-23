@@ -3,6 +3,8 @@ package service
 import (
 	"database/sql"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 func floatToString(f float32) string {
@@ -18,4 +20,11 @@ func sqlNullStringToString(ns sql.NullString) string {
 		return ""
 	}
 	return ns.String
+}
+
+func nullUuidToUuid(nuuid uuid.NullUUID) *uuid.UUID {
+	if nuuid.Valid {
+		return &nuuid.UUID
+	}
+	return nil
 }

@@ -16,14 +16,18 @@ type PaymentService struct {
 	db               *database.Queries
 	paymentProcessor models.PaymentProcessor
 	orderSrv         *OrderService
+	productSrv       *ProductService
+	cartSrv          *CartService
 }
 
-func NewPaymentService(db *database.Queries, processor models.PaymentProcessor, orderSrv *OrderService) *PaymentService {
+func NewPaymentService(db *database.Queries, processor models.PaymentProcessor, orderSrv *OrderService, productSrv *ProductService, cartSrv *CartService) *PaymentService {
 	return &PaymentService{
 		logger:           config.GetLogger(),
 		db:               db,
 		paymentProcessor: processor,
 		orderSrv:         orderSrv,
+		productSrv:       productSrv,
+		cartSrv:          cartSrv,
 	}
 }
 
@@ -73,7 +77,25 @@ func (p *PaymentService) CaptureOrder(ctx context.Context, orderID string) error
 		return err
 	}
 
-	p.logger.Debug("ORDER COMPLETED STATUS", zap.Any("ORDER", order))
+	orderItems := order.OrderItems
+
+	// Update product Stock
+	for _, item := range orderItems {
+		err = p.productSrv.UpdateStock(ctx, item.ProductID, item.Quantity)
+		if err != nil {
+			p.logger.Error("failed to update product stock", zap.Error(err), zap.String("productID", item.ProductID.String()))
+		}
+	}
+
+	// TODO: Clear cart -> Add tempCart to db
+	if order.CartID != nil {
+		err = p.cartSrv.DeleteCart(ctx, *order.CartID)
+		if err != nil {
+			return err
+		}
+	}
+
+	// p.logger.Debug("ORDER COMPLETED STATUS", zap.Any("ORDER", order))
 
 	// Set Status To Completed
 	// TODO: Debuggin purpose, get order and print

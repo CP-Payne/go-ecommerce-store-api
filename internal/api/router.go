@@ -31,7 +31,7 @@ func SetupRouter(cfg *config.Config) http.Handler {
 	reviewSrv := service.NewReviewService(cfg.DB)
 	cartSrv := service.NewCartService(cfg.DB)
 	orderSrv := service.NewOrderService(cfg.DB, cfg.SqlDB)
-	paymentSrv := service.NewPaymentService(cfg.DB, paypalProcessor, orderSrv)
+	paymentSrv := service.NewPaymentService(cfg.DB, paypalProcessor, orderSrv, productSrv, cartSrv)
 
 	authHandler := handlers.NewAuthHandler(userSrv)
 	productHandler := handlers.NewProductHandler(productSrv)
@@ -65,6 +65,7 @@ func SetupRouter(cfg *config.Config) http.Handler {
 		r.Delete("/products/{id}/reviews", reviewHander.DeleteReview)
 
 		r.Post("/cart/create-order", paymentHandler.CreateCartOrder)
+		r.Post("/products/create-order-new", paymentHandler.CreateOrderProductNew)
 		r.Post("/cart/create-order-new", paymentHandler.CreateOrderCartNew)
 
 		r.Get("/cart", cartHandler.GetCart)

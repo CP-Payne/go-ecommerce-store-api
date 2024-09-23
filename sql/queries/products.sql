@@ -26,3 +26,8 @@ SELECT * FROM categories;
 SELECT * FROM products
 WHERE category_id = $1;
 
+
+-- name: UpdateStock :exec
+UPDATE products
+SET stock_quantity = stock_quantity - $2
+WHERE id = $1 AND stock_quantity >= $2;

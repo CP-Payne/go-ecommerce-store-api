@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/CP-Payne/ecomstore/internal/config"
 	"github.com/CP-Payne/ecomstore/internal/database"
@@ -72,6 +73,35 @@ func (s *CartService) GetCart(ctx context.Context, userID uuid.UUID) (models.Car
 
 	cart.Items = itemsInfo
 	return cart, nil
+}
+
+func (s *CartService) CreateTemporaryProductCart(ctx context.Context, userID uuid.UUID, product models.Product, quantity int) models.Cart {
+	cart := models.Cart{
+		ID:     uuid.New(),
+		UserID: userID,
+		Status: "temporary",
+		Items: []models.CartItem{
+			{
+				ProductID: product.ID,
+				Quantity:  quantity,
+				Price:     product.Price,
+				Name:      product.Name,
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return cart
+}
+
+func (s *CartService) DeleteCart(ctx context.Context, cartID uuid.UUID) error {
+	err := s.db.DeleteCart(ctx, cartID)
+	if err != nil {
+		s.logger.Error("failed to delete cart", zap.Error(err), zap.String("cartID", cartID.String()))
+		return fmt.Errorf("failed to delete cart: %w", err)
+	}
+	return nil
 }
 
 func (s *CartService) AddToCart(ctx context.Context, userID, productID uuid.UUID, quantity int) error {

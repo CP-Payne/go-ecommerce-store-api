@@ -1,7 +1,7 @@
 -- name: CreateOrder :one
 INSERT INTO orders(
-    id, user_id, product_total,order_total, status, payment_method, shipping_price, created_at, updated_at
-) VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9)
+    id, user_id, product_total,order_total, status, payment_method, shipping_price, cart_id, created_at, updated_at
+) VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING id;
 
 

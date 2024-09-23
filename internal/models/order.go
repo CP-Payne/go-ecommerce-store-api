@@ -30,6 +30,7 @@ type Order struct {
 	PaymentMethod    string      `json:"paymentMethod"`
 	PayerID          string      `json:"payerId"`
 	ShippingPrice    float32     `json:"shippingPrice"`
+	CartID           *uuid.UUID  `json:"cartId;omitempty"`
 	CreatedAt        time.Time   `json:"createdAt"`
 	UpdatedAt        time.Time   `json:"updatedAt"`
 }

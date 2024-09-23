@@ -10,6 +10,7 @@ CREATE TABLE orders(
     payment_email VARCHAR(255),
     payer_id VARCHAR(255), 
     shipping_price DECIMAL(10, 2) NOT NULL,
+    cart_id UUID,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
