@@ -33,3 +33,7 @@ JOIN cart_items ci ON c.id = ci.cart_id
 JOIN products p ON ci.product_id = p.id
 WHERE c.id = $1;
 
+-- name: DeleteCart :exec
+DELETE FROM carts
+WHERE id=$1;
+

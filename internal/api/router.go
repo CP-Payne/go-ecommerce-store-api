@@ -30,13 +30,14 @@ func SetupRouter(cfg *config.Config) http.Handler {
 	productSrv := service.NewProductService(cfg.DB)
 	reviewSrv := service.NewReviewService(cfg.DB)
 	cartSrv := service.NewCartService(cfg.DB)
-	paymentSrv := service.NewPaymentService(cfg.DB, paypalProcessor)
+	orderSrv := service.NewOrderService(cfg.DB, cfg.SqlDB)
+	paymentSrv := service.NewPaymentService(cfg.DB, paypalProcessor, orderSrv, productSrv, cartSrv)
 
 	authHandler := handlers.NewAuthHandler(userSrv)
 	productHandler := handlers.NewProductHandler(productSrv)
 	reviewHander := handlers.NewReviewHandler(reviewSrv, productSrv)
 	cartHandler := handlers.NewCartHandler(cartSrv)
-	paymentHandler := handlers.NewPaymentHandler(productSrv, paymentSrv, cartSrv)
+	paymentHandler := handlers.NewPaymentHandler(productSrv, paymentSrv, cartSrv, orderSrv)
 	// TODO: if logged in and logging request is sent, redirect user to home page or profile
 
 	r.Group(func(r chi.Router) {
@@ -46,7 +47,6 @@ func SetupRouter(cfg *config.Config) http.Handler {
 		r.Get("/products", productHandler.GetAllProducts)
 		r.Get("/products/{id}", productHandler.GetProduct)
 
-		r.Post("/products/create-order", paymentHandler.CreateProductOrder)
 		r.Get("/products/complete-order", paymentHandler.CaptureOrder)
 
 		r.Get("/products/categories", productHandler.GetProductCategories)
@@ -63,7 +63,8 @@ func SetupRouter(cfg *config.Config) http.Handler {
 		r.Patch("/products/{id}/reviews", reviewHander.UpdateUserReview)
 		r.Delete("/products/{id}/reviews", reviewHander.DeleteReview)
 
-		r.Post("/cart/create-order", paymentHandler.CreateCartOrder)
+		r.Post("/products/create-order", paymentHandler.CreateOrderProduct)
+		r.Post("/cart/create-order", paymentHandler.CreateOrderCart)
 
 		r.Get("/cart", cartHandler.GetCart)
 		r.Post("/cart/add", cartHandler.AddToCart)

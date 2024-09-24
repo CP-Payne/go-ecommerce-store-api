@@ -94,3 +94,14 @@ func (s *ProductService) GetProductsByCategory(ctx context.Context, categoryID u
 	}
 	return pl, nil
 }
+
+func (s *ProductService) UpdateStock(ctx context.Context, productID uuid.UUID, reduceBy int) error {
+	err := s.db.UpdateStock(ctx, database.UpdateStockParams{
+		ID:            productID,
+		StockQuantity: int32(reduceBy),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update product stock", zap.Error(err), zap.String("productID", productID.String()))
+	}
+	return nil
+}

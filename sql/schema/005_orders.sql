@@ -5,9 +5,12 @@ CREATE TABLE orders(
     processor_order_id VARCHAR(100),
     product_total DECIMAL(10, 2) NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'created',
+    order_total DECIMAL(10, 2) NOT NULL,
     payment_method VARCHAR(255) NOT NULL,
+    payment_email VARCHAR(255),
     payer_id VARCHAR(255), 
     shipping_price DECIMAL(10, 2) NOT NULL,
+    cart_id UUID,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
