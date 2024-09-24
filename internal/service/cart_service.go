@@ -27,6 +27,7 @@ func NewCartService(db *database.Queries) *CartService {
 }
 
 // TODO: Add better logging and errors
+// TODO: Add ability to reduce quantity and add quantity to a product in cart
 
 // Get cart with items
 func (s *CartService) GetCart(ctx context.Context, userID uuid.UUID) (models.Cart, error) {

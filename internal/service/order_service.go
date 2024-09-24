@@ -16,6 +16,8 @@ import (
 	"go.uber.org/zap"
 )
 
+// TODO: Add endpoint for user to list there purchases (orders)
+// TODO: Test - if purhcase quantity is > than stock
 var globalShipping float32 = 0
 
 type OrderService struct {

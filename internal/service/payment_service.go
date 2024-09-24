@@ -31,22 +31,6 @@ func NewPaymentService(db *database.Queries, processor models.PaymentProcessor, 
 	}
 }
 
-func (p *PaymentService) CreateProductOrder(ctx context.Context, product *models.Product, quantity int) (*models.OrderResult, error) {
-	orderResult, err := p.paymentProcessor.CreateProductOrder(ctx, product, quantity, shippingPrice)
-	if err != nil {
-		return nil, err
-	}
-	return orderResult, nil
-}
-
-func (p *PaymentService) CreateCartOrder(ctx context.Context, cart *models.Cart) (*models.OrderResult, error) {
-	orderResult, err := p.paymentProcessor.CreateCartOrder(ctx, cart, shippingPrice)
-	if err != nil {
-		return nil, err
-	}
-	return orderResult, nil
-}
-
 func (p *PaymentService) CreateProcessorOrder(ctx context.Context, order *models.Order) (*models.OrderResult, error) {
 	// orderResult, err := p.paymentProcessor.CreateCartOrder(ctx, cart, shippingPrice)
 	orderResult, err := p.paymentProcessor.CreateProcessorOrder(ctx, order)
@@ -87,7 +71,6 @@ func (p *PaymentService) CaptureOrder(ctx context.Context, orderID string) error
 		}
 	}
 
-	// TODO: Clear cart -> Add tempCart to db
 	if order.CartID != nil {
 		err = p.cartSrv.DeleteCart(ctx, *order.CartID)
 		if err != nil {
@@ -95,18 +78,13 @@ func (p *PaymentService) CaptureOrder(ctx context.Context, orderID string) error
 		}
 	}
 
-	// p.logger.Debug("ORDER COMPLETED STATUS", zap.Any("ORDER", order))
-
-	// Set Status To Completed
-	// TODO: Debuggin purpose, get order and print
-
 	return nil
 }
 
-func (p *PaymentService) GetOrderDetails(ctx context.Context, orderID string) error {
-	err := p.paymentProcessor.GetOrderDetails(ctx, orderID)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+// func (p *PaymentService) GetOrderDetails(ctx context.Context, orderID string) error {
+// 	err := p.paymentProcessor.GetOrderDetails(ctx, orderID)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
