@@ -93,9 +93,13 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	})
 
 	response := struct {
-		Msg string `json:"msg"`
+		Msg    string `json:"msg"`
+		Email  string `json:"email"`
+		UserID string `json:"userId"`
 	}{
-		Msg: "Registration successfull",
+		Msg:    "Registration successfull",
+		Email:  user.Email,
+		UserID: user.ID.String(),
 	}
 
 	utils.RespondWithJson(w, http.StatusCreated, &response)
@@ -139,9 +143,11 @@ func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		Value:    token,
 	})
 	response := struct {
-		Msg string `json:"msg"`
+		Msg    string `json:"msg"`
+		UserID string `json:"userId"`
 	}{
-		Msg: "Login successfull",
+		Msg:    "Login successfull",
+		UserID: user.ID.String(),
 	}
 
 	utils.RespondWithJson(w, http.StatusOK, &response)
