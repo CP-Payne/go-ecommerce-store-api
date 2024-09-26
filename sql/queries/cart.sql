@@ -37,3 +37,17 @@ WHERE c.id = $1;
 DELETE FROM carts
 WHERE id=$1;
 
+
+-- name: ReduceItemFromCart :exec
+WITH updated AS (
+    UPDATE cart_items
+    SET quantity = cart_items.quantity - $3
+    WHERE cart_items.cart_id = $1 AND cart_items.product_id = $2
+    RETURNING cart_items.quantity
+)
+DELETE FROM cart_items
+WHERE cart_items.cart_id = $1 AND cart_items.product_id = $2 AND EXISTS (
+    SELECT 1 FROM updated WHERE updated.quantity <= 0
+);
+
+

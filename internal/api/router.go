@@ -73,6 +73,7 @@ func SetupRouter(cfg *config.Config) http.Handler {
 		r.Get("/cart", cartHandler.GetCart)
 		r.Post("/cart/add", cartHandler.AddToCart)
 		r.Post("/cart/remove", cartHandler.RemoveFromCart)
+		r.Post("/cart/reduce", cartHandler.ReduceFromCart)
 	})
 
 	r.Get("/home", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

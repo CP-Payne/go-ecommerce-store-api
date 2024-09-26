@@ -139,6 +139,37 @@ func (s *CartService) AddToCart(ctx context.Context, userID, productID uuid.UUID
 	return nil
 }
 
+func (s *CartService) ReduceFromCart(ctx context.Context, userID, productID uuid.UUID, quantity int) error {
+	// Get active cart
+	cart, err := s.getActiveCart(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	// Reduce item from cart
+	err = s.db.ReduceItemFromCart(ctx, database.ReduceItemFromCartParams{
+		CartID:    cart.ID,
+		ProductID: productID,
+		Quantity:  int32(quantity),
+	})
+	if err == nil {
+		return nil
+	}
+
+	if apperrors.IsCheckViolation(err) {
+		err = s.db.RemoveItemFromCart(ctx, database.RemoveItemFromCartParams{
+			CartID:    cart.ID,
+			ProductID: productID,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to remove item from cart: %w", err)
+		}
+		return nil
+	}
+	s.logger.Error("failed to reduce item from cart", zap.Error(err))
+	return fmt.Errorf("failed to reduce item from cart: %w", err)
+}
+
 func (s *CartService) RemoveFromCart(ctx context.Context, userID, productID uuid.UUID) error {
 	cart, err := s.getActiveCart(ctx, userID)
 	if err != nil {

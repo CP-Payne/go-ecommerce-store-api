@@ -8,11 +8,12 @@ import (
 )
 
 var (
-	ErrConflict  = errors.New("conflict")
-	ErrInternal  = errors.New("internal error")
-	ErrNotFound  = errors.New("resource not found")
-	ErrAuthCode  = errors.New("auth code")
-	ErrParseUUID = errors.New("could not parse UUID")
+	ErrConflict       = errors.New("conflict")
+	ErrInternal       = errors.New("internal error")
+	ErrNotFound       = errors.New("resource not found")
+	ErrAuthCode       = errors.New("auth code")
+	ErrParseUUID      = errors.New("could not parse UUID")
+	ErrCheckViolation = errors.New("cannot reduce product quantity to less than 0")
 )
 
 func IsPqError(err error, code pq.ErrorCode) bool {
@@ -28,4 +29,9 @@ func IsUniqueViolation(err error) bool {
 // IsNoRowsError checks if the error is a "no rows in result set" error
 func IsNoRowsError(err error) bool {
 	return errors.Is(err, sql.ErrNoRows)
+}
+
+// IsCheckViolation checks for check constraint violations
+func IsCheckViolation(err error) bool {
+	return IsPqError(err, "23514")
 }
