@@ -85,6 +85,7 @@ type Review struct {
 	Deleted    bool
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
+	Anonymous  bool
 }
 
 type User struct {

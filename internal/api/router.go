@@ -54,7 +54,6 @@ func SetupRouter(cfg *config.Config) http.Handler {
 		r.Get("/products/categories/{id}", productHandler.GetProductsByCategory)
 
 		r.Get("/products/{id}/reviews", reviewHander.GetProductReviews)
-		r.Get("/products/{productID}/reviews/{userID}", reviewHander.GetUserReviewForProduct)
 	})
 
 	r.Group(func(r chi.Router) {
@@ -63,6 +62,7 @@ func SetupRouter(cfg *config.Config) http.Handler {
 
 		r.Get("/user/profile", userHandler.GetUserDetails)
 
+		r.Get("/products/{productID}/reviews/user", reviewHander.GetUserReviewForProduct)
 		r.Post("/products/{id}/reviews", reviewHander.AddReview)
 		r.Patch("/products/{id}/reviews", reviewHander.UpdateUserReview)
 		r.Delete("/products/{id}/reviews", reviewHander.DeleteReview)

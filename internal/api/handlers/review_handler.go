@@ -35,6 +35,7 @@ type ReviewInput struct {
 	Title      string `json:"title"`
 	ReviewText string `json:"reviewText"`
 	Rating     int    `json:"rating"`
+	Anonymous  bool   `json:"anonymous"`
 }
 
 func (h *ReviewHandler) GetProductReviews(w http.ResponseWriter, r *http.Request) {
@@ -120,7 +121,7 @@ func (h *ReviewHandler) AddReview(w http.ResponseWriter, r *http.Request) {
 	}
 	// TODO: Turn above into helper function
 
-	review, err := h.srvReview.PostReview(r.Context(), reviewInput.Title, reviewInput.ReviewText, reviewInput.Rating, productID, userID)
+	review, err := h.srvReview.PostReview(r.Context(), reviewInput.Title, reviewInput.ReviewText, reviewInput.Rating, reviewInput.Anonymous, productID, userID)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrConflict) {
 			utils.RespondWithError(w, http.StatusConflict, "user already reviewed the product")
@@ -129,7 +130,7 @@ func (h *ReviewHandler) AddReview(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusInternalServerError, "could not add review")
 		return
 	}
-
+	// TODO: Return only success message
 	type successResponse struct {
 		Msg    string        `json:"msg"`
 		Review models.Review `json:"review"`
@@ -163,12 +164,21 @@ func (h *ReviewHandler) GetUserReviewForProduct(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	strUserID := chi.URLParam(r, "userID")
-	userID, err := uuid.Parse(strUserID)
-	if err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "invalid user id")
+	// Get UserID from jwt (request context)
+	_, claims, _ := jwtauth.FromContext(r.Context())
+	strUserID := ""
+	if claims["id"] != nil {
+		strUserID = claims["id"].(string)
+	} else {
+		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
 		return
 	}
+	userID, err := uuid.Parse(strUserID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+		return
+	}
+
 	review, err := h.srvReview.GetReviewByUserAndProduct(r.Context(), userID, productID)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrNotFound) {
@@ -269,15 +279,9 @@ func (h *ReviewHandler) UpdateUserReview(w http.ResponseWriter, r *http.Request)
 	}
 
 	// TODO: Refactor abovte into helper functions
-
-	// Parse JSON from body
-	type inputParams struct {
-		Title      string `json:"title"`
-		ReviewText string `json:"reviewText"`
-		Rating     int    `json:"rating"`
-	}
-
-	params := &inputParams{}
+	//
+	params := ReviewInput{}
+	params.Anonymous = true
 
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "invalid parameters")
@@ -294,7 +298,8 @@ func (h *ReviewHandler) UpdateUserReview(w http.ResponseWriter, r *http.Request)
 		params.Rating = 1
 	}
 
-	review, err := h.srvReview.UpdateReview(r.Context(), userID, productID, params.Title, params.ReviewText, params.Rating)
+	// TODO: Rename input to the same as with addREview
+	review, err := h.srvReview.UpdateReview(r.Context(), userID, productID, params.Title, params.ReviewText, params.Rating, params.Anonymous)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrNotFound) {
 			utils.RespondWithError(w, http.StatusNotFound, "user has not reviewed the product")

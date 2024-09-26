@@ -26,7 +26,7 @@ func NewReviewService(db *database.Queries) *ReviewService {
 	}
 }
 
-func (s *ReviewService) PostReview(ctx context.Context, title, reviewText string, rating int, productID, userID uuid.UUID) (models.Review, error) {
+func (s *ReviewService) PostReview(ctx context.Context, title, reviewText string, rating int, anonymous bool, productID, userID uuid.UUID) (models.Review, error) {
 	// TODO: make sure that the user can only add review to product he purchased
 	// TODO: user should only be able to add a review if he has not yet reviewed the product or the review has a status of deleted
 
@@ -52,6 +52,7 @@ func (s *ReviewService) PostReview(ctx context.Context, title, reviewText string
 		ProductID:  productID,
 		UserID:     userID,
 		Deleted:    false,
+		Anonymous:  anonymous,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	})
@@ -63,34 +64,63 @@ func (s *ReviewService) PostReview(ctx context.Context, title, reviewText string
 	return review, nil
 }
 
-func (s *ReviewService) GetProductReviews(ctx context.Context, productID uuid.UUID) ([]models.Review, error) {
+// func (s *ReviewService) GetProductReviews(ctx context.Context, productID uuid.UUID) ([]models.Review, error) {
+// 	dbReviews, err := s.db.GetProductReviews(ctx, productID)
+// 	if err != nil {
+// 		if apperrors.IsNoRowsError(err) {
+// 			return []models.Review{}, nil
+// 		}
+// 		s.logger.Error("failed to retrieve product reviews from db", zap.Error(err), zap.String("productID", productID.String()))
+// 		return []models.Review{}, fmt.Errorf("failed to retrieve product reviews: %w", err)
+// 	}
+//
+// 	return models.DatabaseReviewsToReviews(dbReviews), nil
+// }
+
+func (s *ReviewService) GetProductReviews(ctx context.Context, productID uuid.UUID) ([]models.ReviewDisplay, error) {
 	dbReviews, err := s.db.GetProductReviews(ctx, productID)
 	if err != nil {
 		if apperrors.IsNoRowsError(err) {
-			return []models.Review{}, nil
+			return []models.ReviewDisplay{}, nil
 		}
 		s.logger.Error("failed to retrieve product reviews from db", zap.Error(err), zap.String("productID", productID.String()))
-		return []models.Review{}, fmt.Errorf("failed to retrieve product reviews: %w", err)
+		return []models.ReviewDisplay{}, fmt.Errorf("failed to retrieve product reviews: %w", err)
 	}
 
-	return models.DatabaseReviewsToReviews(dbReviews), nil
+	return models.DatabaseProductReviewsToReviewDisplays(dbReviews), nil
 }
 
-func (s *ReviewService) GetReviewByUserAndProduct(ctx context.Context, userID, productID uuid.UUID) (models.Review, error) {
+//	func (s *ReviewService) GetReviewByUserAndProduct(ctx context.Context, userID, productID uuid.UUID) (models.Review, error) {
+//		dbReview, err := s.db.GetReviewByUserAndProduct(ctx, database.GetReviewByUserAndProductParams{
+//			UserID:    userID,
+//			ProductID: productID,
+//		})
+//		if err != nil {
+//			if apperrors.IsNoRowsError(err) {
+//				return models.Review{}, fmt.Errorf("no user review for product found: %w", apperrors.ErrNotFound)
+//			}
+//			s.logger.Error("failed to retrieve user review for product", zap.Error(err),
+//				zap.String("userID", userID.String()), zap.String("productID", productID.String()))
+//			// TODO: update all errors and return apperrors
+//			return models.Review{}, fmt.Errorf("failed to retrieve user review for product: %w", apperrors.ErrInternal)
+//		}
+//		return models.DatabaseReviewToReview(dbReview), nil
+//	}
+func (s *ReviewService) GetReviewByUserAndProduct(ctx context.Context, userID, productID uuid.UUID) (models.ReviewDisplay, error) {
 	dbReview, err := s.db.GetReviewByUserAndProduct(ctx, database.GetReviewByUserAndProductParams{
 		UserID:    userID,
 		ProductID: productID,
 	})
 	if err != nil {
 		if apperrors.IsNoRowsError(err) {
-			return models.Review{}, fmt.Errorf("no user review for product found: %w", apperrors.ErrNotFound)
+			return models.ReviewDisplay{}, fmt.Errorf("no user review for product found: %w", apperrors.ErrNotFound)
 		}
 		s.logger.Error("failed to retrieve user review for product", zap.Error(err),
 			zap.String("userID", userID.String()), zap.String("productID", productID.String()))
 		// TODO: update all errors and return apperrors
-		return models.Review{}, fmt.Errorf("failed to retrieve user review for product: %w", apperrors.ErrInternal)
+		return models.ReviewDisplay{}, fmt.Errorf("failed to retrieve user review for product: %w", apperrors.ErrInternal)
 	}
-	return models.DatabaseReviewToReview(dbReview), nil
+	return models.DatabaseUserProductReviewToReviewDisplay(dbReview), nil
 }
 
 func (s *ReviewService) DeleteReview(ctx context.Context, userID, productID uuid.UUID) error {
@@ -121,7 +151,7 @@ func (s *ReviewService) IsReviewOwner(ctx context.Context, reviewID, userID uuid
 	return isOwner, err
 }
 
-func (s *ReviewService) UpdateReview(ctx context.Context, userID, productID uuid.UUID, title, reviewText string, rating int) (models.Review, error) {
+func (s *ReviewService) UpdateReview(ctx context.Context, userID, productID uuid.UUID, title, reviewText string, rating int, anonymous bool) (models.Review, error) {
 	reviewed, err := s.db.HasUserReviewedProduct(ctx, database.HasUserReviewedProductParams{
 		UserID:    userID,
 		ProductID: productID,
@@ -149,6 +179,7 @@ func (s *ReviewService) UpdateReview(ctx context.Context, userID, productID uuid
 		Rating:    int32(rating),
 		UserID:    userID,
 		ProductID: productID,
+		Anonymous: anonymous,
 	})
 	if err != nil {
 		s.logger.Error("failed to update user review", zap.Error(err),
