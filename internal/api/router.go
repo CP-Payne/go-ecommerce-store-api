@@ -37,6 +37,7 @@ func SetupRouter(cfg *config.Config) http.Handler {
 	productHandler := handlers.NewProductHandler(productSrv)
 	reviewHander := handlers.NewReviewHandler(reviewSrv, productSrv)
 	cartHandler := handlers.NewCartHandler(cartSrv)
+	userHandler := handlers.NewUserHandler(userSrv)
 	paymentHandler := handlers.NewPaymentHandler(productSrv, paymentSrv, cartSrv, orderSrv)
 	// TODO: if logged in and logging request is sent, redirect user to home page or profile
 
@@ -59,6 +60,9 @@ func SetupRouter(cfg *config.Config) http.Handler {
 	r.Group(func(r chi.Router) {
 		r.Use(jwtauth.Verifier(config.GetTokenAuth()))
 		r.Use(jwtauth.Authenticator)
+
+		r.Get("/user/profile", userHandler.GetUserDetails)
+
 		r.Post("/products/{id}/reviews", reviewHander.AddReview)
 		r.Patch("/products/{id}/reviews", reviewHander.UpdateUserReview)
 		r.Delete("/products/{id}/reviews", reviewHander.DeleteReview)

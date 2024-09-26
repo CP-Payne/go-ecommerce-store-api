@@ -16,6 +16,12 @@ type User struct {
 	ID             uuid.UUID `json:"id"`
 }
 
+type UserProfile struct {
+	ID    uuid.UUID `json:"id"`
+	Name  string    `json:"name"`
+	Email string    `json:"email"`
+}
+
 // Database User to User mappings
 func DatabaseUserToUser(user database.User) User {
 	return User{

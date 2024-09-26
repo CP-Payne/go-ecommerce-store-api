@@ -66,3 +66,22 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	)
 	return i, err
 }
+
+const getUserDetails = `-- name: GetUserDetails :one
+SELECT id, email, name 
+FROM users
+WHERE id = $1
+`
+
+type GetUserDetailsRow struct {
+	ID    uuid.UUID
+	Email string
+	Name  sql.NullString
+}
+
+func (q *Queries) GetUserDetails(ctx context.Context, id uuid.UUID) (GetUserDetailsRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserDetails, id)
+	var i GetUserDetailsRow
+	err := row.Scan(&i.ID, &i.Email, &i.Name)
+	return i, err
+}

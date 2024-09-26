@@ -66,3 +66,21 @@ func (s *UserService) CreateUser(ctx context.Context, email, name, password stri
 
 	return models.DatabaseUserToUser(dbUser), nil
 }
+
+func (s *UserService) GetUserProfile(ctx context.Context, userID uuid.UUID) (models.UserProfile, error) {
+	userDetailsRow, err := s.db.GetUserDetails(ctx, userID)
+	if err != nil {
+		if apperrors.IsNoRowsError(err) {
+			return models.UserProfile{}, fmt.Errorf("user not found: %w", apperrors.ErrNotFound)
+		}
+		s.logger.Error("failed to retrieve userDetails from db", zap.Error(err), zap.String("userID", userID.String()))
+		return models.UserProfile{}, fmt.Errorf("failed to retrieve user details: %w", err)
+
+	}
+
+	return models.UserProfile{
+		ID:    userDetailsRow.ID,
+		Email: userDetailsRow.Email,
+		Name:  sqlNullStringToString(userDetailsRow.Name),
+	}, nil
+}
