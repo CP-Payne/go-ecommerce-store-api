@@ -5,11 +5,11 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/CP-Payne/ecomstore/internal/api/middleware"
 	"github.com/CP-Payne/ecomstore/internal/config"
 	"github.com/CP-Payne/ecomstore/internal/service"
 	"github.com/CP-Payne/ecomstore/internal/utils"
 	"github.com/CP-Payne/ecomstore/internal/utils/apperrors"
-	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -41,24 +41,10 @@ func (h *ReviewHandler) GetProductReviews(w http.ResponseWriter, r *http.Request
 	ctx := r.Context()
 	logger := h.logger.With(zap.String("handler", "GetProductReviews"))
 
-	strProductID := chi.URLParam(r, "id")
-	productID, err := uuid.Parse(strProductID)
-	if err != nil {
-		logger.Warn("invalid product id", zap.Error(err), zap.String("productID", strProductID))
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
-		return
-	}
-
-	productExists, err := h.srvProduct.ProductExists(ctx, productID)
-	if err != nil {
-		logger.Error("failed to check product existence", zap.Error(err), zap.String("productID", productID.String()))
+	productID, ok := r.Context().Value(middleware.ProductIDKey).(uuid.UUID)
+	if !ok {
+		logger.Info("failed to retrieve product id from context")
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
-		return
-	}
-
-	if !productExists {
-		logger.Warn("product does not exist", zap.String("productID", productID.String()))
-		utils.RespondWithError(w, http.StatusNotFound, "Product not found")
 		return
 	}
 
@@ -76,24 +62,10 @@ func (h *ReviewHandler) AddReview(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := h.logger.With(zap.String("handler", "AddReview"))
 
-	strProductID := chi.URLParam(r, "id")
-	productID, err := uuid.Parse(strProductID)
-	if err != nil {
-		logger.Warn("invalid product id", zap.Error(err), zap.String("productID", strProductID))
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
-		return
-	}
-
-	productExists, err := h.srvProduct.ProductExists(ctx, productID)
-	if err != nil {
-		logger.Error("failed to check product existence", zap.Error(err), zap.String("product ID", productID.String()))
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed process request")
-		return
-	}
-
-	if !productExists {
-		logger.Warn("product does not exist", zap.String("productID", productID.String()))
-		utils.RespondWithError(w, http.StatusNotFound, "Product not found")
+	productID, ok := r.Context().Value(middleware.ProductIDKey).(uuid.UUID)
+	if !ok {
+		logger.Info("failed to retrieve product id from context")
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
 		return
 	}
 
@@ -155,24 +127,10 @@ func (h *ReviewHandler) GetUserReviewForProduct(w http.ResponseWriter, r *http.R
 	ctx := r.Context()
 	logger := h.logger.With(zap.String("handler", "GetUserReviewForProduct"))
 
-	// TODO: Why not turn below into middleware?
-	strProductID := chi.URLParam(r, "productID")
-	productID, err := uuid.Parse(strProductID)
-	if err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid product id")
-		return
-	}
-
-	productExists, err := h.srvProduct.ProductExists(ctx, productID)
-	if err != nil {
-		logger.Error("failed to check product existence", zap.Error(err), zap.String("productID", productID.String()))
+	productID, ok := r.Context().Value(middleware.ProductIDKey).(uuid.UUID)
+	if !ok {
+		logger.Info("failed to retrieve product id from context")
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
-		return
-	}
-
-	if !productExists {
-		logger.Warn("product does not exist", zap.String("productID", productID.String()))
-		utils.RespondWithError(w, http.StatusNotFound, "Product not found")
 		return
 	}
 
@@ -209,24 +167,10 @@ func (h *ReviewHandler) DeleteReview(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := h.logger.With(zap.String("handler", "DeleteReview"))
 
-	strProductID := chi.URLParam(r, "id")
-	productID, err := uuid.Parse(strProductID)
-	if err != nil {
-		logger.Warn("invalid product id", zap.Error(err), zap.String("productID", strProductID))
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
-		return
-	}
-
-	productExists, err := h.srvProduct.ProductExists(ctx, productID)
-	if err != nil {
-		logger.Error("failed to check product existence", zap.Error(err), zap.String("productID", productID.String()))
+	productID, ok := r.Context().Value(middleware.ProductIDKey).(uuid.UUID)
+	if !ok {
+		logger.Info("failed to retrieve product id from context")
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
-		return
-	}
-
-	if !productExists {
-		logger.Warn("product does not exist", zap.String("productID", productID.String()))
-		utils.RespondWithError(w, http.StatusNotFound, "Product not found")
 		return
 	}
 
@@ -260,24 +204,10 @@ func (h *ReviewHandler) UpdateUserReview(w http.ResponseWriter, r *http.Request)
 	ctx := r.Context()
 	logger := h.logger.With(zap.String("handler", "UpdateUserReview"))
 
-	strProductID := chi.URLParam(r, "id")
-	productID, err := uuid.Parse(strProductID)
-	if err != nil {
-		logger.Warn("invalid product id", zap.Error(err), zap.String("productID", strProductID))
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
-		return
-	}
-
-	productExists, err := h.srvProduct.ProductExists(ctx, productID)
-	if err != nil {
-		logger.Error("failed to check product existence", zap.Error(err), zap.String("productID", productID.String()))
+	productID, ok := r.Context().Value(middleware.ProductIDKey).(uuid.UUID)
+	if !ok {
+		logger.Info("failed to retrieve product id from context")
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
-		return
-	}
-
-	if !productExists {
-		logger.Warn("product does not exist", zap.String("productID", productID.String()))
-		utils.RespondWithError(w, http.StatusNotFound, "Product not found")
 		return
 	}
 
@@ -322,7 +252,7 @@ func (h *ReviewHandler) UpdateUserReview(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	utils.RespondWithJson(w, http.StatusCreated, map[string]interface{}{
+	utils.RespondWithJson(w, http.StatusOK, map[string]interface{}{
 		"message": "Review updated successfully",
 		"review":  review,
 	})

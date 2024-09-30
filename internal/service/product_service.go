@@ -101,7 +101,7 @@ func (s *ProductService) UpdateStock(ctx context.Context, productID uuid.UUID, r
 		StockQuantity: int32(reduceBy),
 	})
 	if err != nil {
-		return fmt.Errorf("failed to update product stock", zap.Error(err), zap.String("productID", productID.String()))
+		return fmt.Errorf("failed to update product's stock: %w", err)
 	}
 	return nil
 }

@@ -39,7 +39,6 @@ func SetupRouter(cfg *config.Config) http.Handler {
 	cartHandler := handlers.NewCartHandler(cartSrv)
 	userHandler := handlers.NewUserHandler(userSrv)
 	paymentHandler := handlers.NewPaymentHandler(productSrv, paymentSrv, cartSrv, orderSrv)
-	// TODO: if logged in and logging request is sent, redirect user to home page or profile
 
 	r.Group(func(r chi.Router) {
 		r.Post("/register", authHandler.RegisterUser)
@@ -53,7 +52,6 @@ func SetupRouter(cfg *config.Config) http.Handler {
 		r.Get("/products/categories", productHandler.GetProductCategories)
 		r.Get("/products/categories/{id}", productHandler.GetProductsByCategory)
 
-		r.Get("/products/{id}/reviews", reviewHander.GetProductReviews)
 	})
 
 	r.Group(func(r chi.Router) {
@@ -61,11 +59,6 @@ func SetupRouter(cfg *config.Config) http.Handler {
 		r.Use(jwtauth.Authenticator)
 
 		r.Get("/user/profile", userHandler.GetUserDetails)
-
-		r.Get("/products/{productID}/reviews/user", reviewHander.GetUserReviewForProduct)
-		r.Post("/products/{id}/reviews", reviewHander.AddReview)
-		r.Patch("/products/{id}/reviews", reviewHander.UpdateUserReview)
-		r.Delete("/products/{id}/reviews", reviewHander.DeleteReview)
 
 		r.Post("/products/create-order", paymentHandler.CreateOrderProduct)
 		r.Post("/cart/create-order", paymentHandler.CreateOrderCart)
@@ -76,6 +69,21 @@ func SetupRouter(cfg *config.Config) http.Handler {
 		r.Post("/cart/reduce", cartHandler.ReduceFromCart)
 	})
 
+	r.Group(func(r chi.Router) {
+		r.Use(cmid.ProductMiddleware(productSrv, cfg.Logger))
+		r.Get("/products/{id}/reviews", reviewHander.GetProductReviews)
+	})
+
+	r.Group(func(r chi.Router) {
+		r.Use(jwtauth.Verifier(config.GetTokenAuth()))
+		r.Use(jwtauth.Authenticator)
+		r.Use(cmid.ProductMiddleware(productSrv, cfg.Logger))
+
+		r.Get("/products/{id}/reviews/user", reviewHander.GetUserReviewForProduct)
+		r.Patch("/products/{id}/reviews", reviewHander.UpdateUserReview)
+		r.Delete("/products/{id}/reviews", reviewHander.DeleteReview)
+		r.Post("/products/{id}/reviews", reviewHander.AddReview)
+	})
 	r.Get("/home", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("This will be the home page"))
 	}))
