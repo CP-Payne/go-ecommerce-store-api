@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/CP-Payne/ecomstore/internal/config"
-	"github.com/CP-Payne/ecomstore/internal/models"
 	"github.com/CP-Payne/ecomstore/internal/service"
 	"github.com/CP-Payne/ecomstore/internal/utils"
 	"github.com/CP-Payne/ecomstore/internal/utils/apperrors"
@@ -39,28 +38,34 @@ type ReviewInput struct {
 }
 
 func (h *ReviewHandler) GetProductReviews(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	logger := h.logger.With(zap.String("handler", "GetProductReviews"))
+
 	strProductID := chi.URLParam(r, "id")
 	productID, err := uuid.Parse(strProductID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "invalid product id")
+		logger.Warn("invalid product id", zap.Error(err), zap.String("productID", strProductID))
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
 		return
 	}
 
-	productExists, err := h.srvProduct.ProductExists(r.Context(), productID)
+	productExists, err := h.srvProduct.ProductExists(ctx, productID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+		logger.Error("failed to check product existence", zap.Error(err), zap.String("productID", productID.String()))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
 		return
 	}
 
 	if !productExists {
-
-		utils.RespondWithError(w, http.StatusBadRequest, "productID provided does not exist")
+		logger.Warn("product does not exist", zap.String("productID", productID.String()))
+		utils.RespondWithError(w, http.StatusNotFound, "Product not found")
 		return
 	}
 
-	productReviews, err := h.srvReview.GetProductReviews(r.Context(), productID)
+	productReviews, err := h.srvReview.GetProductReviews(ctx, productID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "failed to retrieve product reviews")
+		logger.Error("failed to retrieve product reviews", zap.Error(err), zap.String("productID", productID.String()))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve product reviews")
 		return
 	}
 
@@ -68,256 +73,257 @@ func (h *ReviewHandler) GetProductReviews(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ReviewHandler) AddReview(w http.ResponseWriter, r *http.Request) {
-	// Get productID from url parameter
-	// TODO: Make sure only a user who purchased the product can review it
+	ctx := r.Context()
+	logger := h.logger.With(zap.String("handler", "AddReview"))
+
 	strProductID := chi.URLParam(r, "id")
 	productID, err := uuid.Parse(strProductID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "invalid product id")
+		logger.Warn("invalid product id", zap.Error(err), zap.String("productID", strProductID))
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
 		return
 	}
 
-	productExists, err := h.srvProduct.ProductExists(r.Context(), productID)
+	productExists, err := h.srvProduct.ProductExists(ctx, productID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "failed to add review")
+		logger.Error("failed to check product existence", zap.Error(err), zap.String("product ID", productID.String()))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed process request")
 		return
 	}
 
 	if !productExists {
-		utils.RespondWithError(w, http.StatusBadRequest, "productID provided does not exist")
+		logger.Warn("product does not exist", zap.String("productID", productID.String()))
+		utils.RespondWithError(w, http.StatusNotFound, "Product not found")
 		return
 	}
 
-	// Get UserID from jwt (request context)
-	_, claims, _ := jwtauth.FromContext(r.Context())
-	strUserID := ""
-	if claims["id"] != nil {
-		strUserID = claims["id"].(string)
-	} else {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+	_, claims, _ := jwtauth.FromContext(ctx)
+	strUserID, ok := claims["id"].(string)
+	if !ok {
+		logger.Error("user id not found in token claims")
+		utils.RespondWithError(w, http.StatusUnauthorized, "Invalid authentication")
 		return
 	}
 	userID, err := uuid.Parse(strUserID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+		logger.Error("failed to parse user id", zap.Error(err), zap.String("userID", strUserID))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
 		return
 	}
 
-	reviewInput := &ReviewInput{}
-	if err := json.NewDecoder(r.Body).Decode(reviewInput); err != nil {
-		h.logger.Error("failed to decode json body", zap.Error(err))
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
-		return
-	}
-	if len(reviewInput.Title) > 30 {
-		utils.RespondWithError(w, http.StatusBadRequest, "title size must be less than 30 characters")
+	var reviewInput ReviewInput
+	if err := json.NewDecoder(r.Body).Decode(&reviewInput); err != nil {
+		logger.Warn("failed to decode request body", zap.Error(err))
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	if reviewInput.Rating > 5 {
-		reviewInput.Rating = 5
-	} else if reviewInput.Rating < 1 {
-		reviewInput.Rating = 1
+	if err := validateReviewInput(reviewInput); err != nil {
+		logger.Warn("invalid review input", zap.Error(err))
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
 	}
-	// TODO: Turn above into helper function
 
-	review, err := h.srvReview.PostReview(r.Context(), reviewInput.Title, reviewInput.ReviewText, reviewInput.Rating, reviewInput.Anonymous, productID, userID)
+	_, err = h.srvReview.PostReview(ctx, reviewInput.Title, reviewInput.ReviewText, reviewInput.Rating, reviewInput.Anonymous, productID, userID)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrConflict) {
-			utils.RespondWithError(w, http.StatusConflict, "user already reviewed the product")
+			logger.Info("user has already reviewed the product", zap.String("userID", userID.String()), zap.String("productID", productID.String()))
+			utils.RespondWithError(w, http.StatusConflict, "User has already reviewed the product")
 			return
 		}
-		utils.RespondWithError(w, http.StatusInternalServerError, "could not add review")
+		logger.Error("failed to post review", zap.Error(err), zap.String("userID", userID.String()), zap.String("productID", productID.String()))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to add review")
 		return
 	}
-	// TODO: Return only success message
-	type successResponse struct {
-		Msg    string        `json:"msg"`
-		Review models.Review `json:"review"`
-		// TODO: return user's name instead of the ID
-		// TODO: Do not return entire review object
-	}
 
-	utils.RespondWithJson(w, http.StatusCreated, successResponse{
-		Msg:    "review added successfully",
-		Review: review,
+	utils.RespondWithJson(w, http.StatusCreated, map[string]interface{}{
+		"message": "Review added successfully",
 	})
 }
 
+func validateReviewInput(input ReviewInput) error {
+	if len(input.Title) > 30 {
+		return errors.New("title must be less than 30 characters")
+	}
+	if input.Rating < 1 || input.Rating > 5 {
+		return errors.New("rating must be between 1 and 5")
+	}
+	return nil
+}
+
 func (h *ReviewHandler) GetUserReviewForProduct(w http.ResponseWriter, r *http.Request) {
-	// Get productID from url parameter
+	ctx := r.Context()
+	logger := h.logger.With(zap.String("handler", "GetUserReviewForProduct"))
+
+	// TODO: Why not turn below into middleware?
 	strProductID := chi.URLParam(r, "productID")
 	productID, err := uuid.Parse(strProductID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "invalid product id")
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid product id")
 		return
 	}
 
-	productExists, err := h.srvProduct.ProductExists(r.Context(), productID)
+	productExists, err := h.srvProduct.ProductExists(ctx, productID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "could not determine if product exists")
+		logger.Error("failed to check product existence", zap.Error(err), zap.String("productID", productID.String()))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
 		return
 	}
 
 	if !productExists {
-		utils.RespondWithError(w, http.StatusBadRequest, "productID provided does not exist")
+		logger.Warn("product does not exist", zap.String("productID", productID.String()))
+		utils.RespondWithError(w, http.StatusNotFound, "Product not found")
 		return
 	}
 
-	// Get UserID from jwt (request context)
-	_, claims, _ := jwtauth.FromContext(r.Context())
-	strUserID := ""
-	if claims["id"] != nil {
-		strUserID = claims["id"].(string)
-	} else {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+	_, claims, _ := jwtauth.FromContext(ctx)
+	strUserID, ok := claims["id"].(string)
+	if !ok {
+		logger.Error("user id not found in token claims")
+		utils.RespondWithError(w, http.StatusUnauthorized, "Invalid authentication")
 		return
 	}
 	userID, err := uuid.Parse(strUserID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+		logger.Error("failed to parse user id", zap.Error(err), zap.String("userID", strUserID))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
 		return
 	}
 
 	review, err := h.srvReview.GetReviewByUserAndProduct(r.Context(), userID, productID)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrNotFound) {
-			utils.RespondWithError(w, http.StatusNotFound, "user review not found for product")
+			logger.Warn("user review does not exist", zap.String("userID", userID.String()), zap.String("productID", productID.String()))
+			utils.RespondWithError(w, http.StatusNotFound, "User review not found")
 			return
 		}
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+		logger.Error("failed to retrieve user review", zap.Error(err), zap.String("userID", userID.String()), zap.String("productID", productID.String()))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve user review")
 		return
 	}
-
-	// TODO: return user's name instead of the ID
-	// TODO: Do not return entire review object
 
 	utils.RespondWithJson(w, http.StatusOK, review)
 }
 
 func (h *ReviewHandler) DeleteReview(w http.ResponseWriter, r *http.Request) {
-	// Get productID from url parameter
+	ctx := r.Context()
+	logger := h.logger.With(zap.String("handler", "DeleteReview"))
+
 	strProductID := chi.URLParam(r, "id")
 	productID, err := uuid.Parse(strProductID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "invalid product id")
+		logger.Warn("invalid product id", zap.Error(err), zap.String("productID", strProductID))
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
 		return
 	}
 
-	productExists, err := h.srvProduct.ProductExists(r.Context(), productID)
+	productExists, err := h.srvProduct.ProductExists(ctx, productID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "could not determine if product exists")
+		logger.Error("failed to check product existence", zap.Error(err), zap.String("productID", productID.String()))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
 		return
 	}
 
 	if !productExists {
-		utils.RespondWithError(w, http.StatusBadRequest, "productID provided does not exist")
+		logger.Warn("product does not exist", zap.String("productID", productID.String()))
+		utils.RespondWithError(w, http.StatusNotFound, "Product not found")
 		return
 	}
 
-	// Get UserID from jwt (request context)
-	_, claims, _ := jwtauth.FromContext(r.Context())
-	strUserID := ""
-	if claims["id"] != nil {
-		strUserID = claims["id"].(string)
-	} else {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+	_, claims, _ := jwtauth.FromContext(ctx)
+	strUserID, ok := claims["id"].(string)
+	if !ok {
+		logger.Error("user id not found in token claims")
+		utils.RespondWithError(w, http.StatusUnauthorized, "Invalid authentication")
 		return
 	}
 	userID, err := uuid.Parse(strUserID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+		logger.Error("failed to parse user id", zap.Error(err), zap.String("userID", strUserID))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
 		return
 	}
 
-	err = h.srvReview.DeleteReview(r.Context(), userID, productID)
+	err = h.srvReview.DeleteReview(ctx, userID, productID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "failed to delete review")
+		logger.Error("failed to delete review", zap.Error(err), zap.String("userID", userID.String()), zap.String("productID", productID.String()))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete review")
 		return
 	}
-	type successResponse struct {
-		Msg string `json:"msg"`
-	}
-	utils.RespondWithJson(w, http.StatusOK, successResponse{
-		Msg: "review deleted",
+
+	utils.RespondWithJson(w, http.StatusOK, map[string]interface{}{
+		"message": "Review deleted successfully",
 	})
 }
 
 func (h *ReviewHandler) UpdateUserReview(w http.ResponseWriter, r *http.Request) {
-	// Get productID from url parameter
+	ctx := r.Context()
+	logger := h.logger.With(zap.String("handler", "UpdateUserReview"))
+
 	strProductID := chi.URLParam(r, "id")
 	productID, err := uuid.Parse(strProductID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "invalid product id")
+		logger.Warn("invalid product id", zap.Error(err), zap.String("productID", strProductID))
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
 		return
 	}
 
-	productExists, err := h.srvProduct.ProductExists(r.Context(), productID)
+	productExists, err := h.srvProduct.ProductExists(ctx, productID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "could not determine if product exists")
+		logger.Error("failed to check product existence", zap.Error(err), zap.String("productID", productID.String()))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
 		return
 	}
 
 	if !productExists {
-		utils.RespondWithError(w, http.StatusBadRequest, "productID provided does not exist")
+		logger.Warn("product does not exist", zap.String("productID", productID.String()))
+		utils.RespondWithError(w, http.StatusNotFound, "Product not found")
 		return
 	}
 
-	// Get UserID from jwt (request context)
-	_, claims, _ := jwtauth.FromContext(r.Context())
-	strUserID := ""
-	if claims["id"] != nil {
-		strUserID = claims["id"].(string)
-	} else {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+	_, claims, _ := jwtauth.FromContext(ctx)
+	strUserID, ok := claims["id"].(string)
+	if !ok {
+		logger.Error("user id not found in token claims")
+		utils.RespondWithError(w, http.StatusUnauthorized, "Invalid authentication")
 		return
 	}
 	userID, err := uuid.Parse(strUserID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+		logger.Error("failed to parse user id", zap.Error(err), zap.String("userID", strUserID))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
 		return
 	}
 
-	// TODO: Refactor abovte into helper functions
-	//
-	params := ReviewInput{}
-	params.Anonymous = true
+	var reviewInput ReviewInput
+	reviewInput.Anonymous = true
 
-	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "invalid parameters")
-		return
-	}
-	if len(params.Title) > 30 {
-		utils.RespondWithError(w, http.StatusBadRequest, "title size must be less than 30 characters")
+	if err := json.NewDecoder(r.Body).Decode(&reviewInput); err != nil {
+		logger.Warn("failed to decode request body", zap.Error(err))
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	if params.Rating > 5 {
-		params.Rating = 5
-	} else if params.Rating < 1 {
-		params.Rating = 1
+	if err := validateReviewInput(reviewInput); err != nil {
+		logger.Warn("invalid review input", zap.Error(err))
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
 	}
 
-	// TODO: Rename input to the same as with addREview
-	review, err := h.srvReview.UpdateReview(r.Context(), userID, productID, params.Title, params.ReviewText, params.Rating, params.Anonymous)
+	review, err := h.srvReview.UpdateReview(ctx, userID, productID, reviewInput.Title, reviewInput.ReviewText, reviewInput.Rating, reviewInput.Anonymous)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrNotFound) {
-			utils.RespondWithError(w, http.StatusNotFound, "user has not reviewed the product")
+			logger.Info("review not found", zap.String("userID", userID.String()), zap.String("productID", productID.String()))
+			utils.RespondWithError(w, http.StatusNotFound, "User has not reviewed the product")
 			return
 		}
-		utils.RespondWithError(w, http.StatusInternalServerError, "could updated review")
+		logger.Error("failed to update review", zap.Error(err), zap.String("userID", userID.String()), zap.String("productID", productID.String()))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update review")
 		return
 	}
 
-	type successResponse struct {
-		Msg    string        `json:"msg"`
-		Review models.Review `json:"review"`
-		// TODO: return user's name instead of the ID
-		// TODO: Do not return entire review object
-	}
-
-	utils.RespondWithJson(w, http.StatusCreated, successResponse{
-		Msg:    "review updated successfully",
-		Review: review,
+	utils.RespondWithJson(w, http.StatusCreated, map[string]interface{}{
+		"message": "Review updated successfully",
+		"review":  review,
 	})
 }

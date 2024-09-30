@@ -27,22 +27,24 @@ func NewReviewService(db *database.Queries) *ReviewService {
 }
 
 func (s *ReviewService) PostReview(ctx context.Context, title, reviewText string, rating int, anonymous bool, productID, userID uuid.UUID) (models.Review, error) {
-	// TODO: make sure that the user can only add review to product he purchased
-	// TODO: user should only be able to add a review if he has not yet reviewed the product or the review has a status of deleted
+	logger := s.logger.With(
+		zap.String("method", "PostReview"),
+		zap.String("userID", userID.String()),
+		zap.String("productID", productID.String()),
+	)
 
-	// Check if user has already reviewed product
 	reviewed, err := s.db.HasUserReviewedProduct(ctx, database.HasUserReviewedProductParams{
 		UserID:    userID,
 		ProductID: productID,
 	})
 	if err != nil {
-		s.logger.Error("failed to check if user already reviewed product", zap.Error(err), zap.String("userID", userID.String()),
-			zap.String("productID", productID.String()))
-		return models.Review{}, fmt.Errorf("failed to determine if user already reviewed product: %w", apperrors.ErrInternal)
+		logger.Error("failed to check if user already reviewed product", zap.Error(err))
+		return models.Review{}, fmt.Errorf("failed to check existing review: %w", apperrors.ErrInternal)
 	}
 
 	if reviewed {
-		return models.Review{}, fmt.Errorf("user already reviewed product: %w", apperrors.ErrConflict)
+		logger.Info("user attempted to review product again")
+		return models.Review{}, apperrors.ErrConflict
 	}
 	dbReview, err := s.db.InsertReview(ctx, database.InsertReviewParams{
 		ID:         uuid.New(),
@@ -57,116 +59,96 @@ func (s *ReviewService) PostReview(ctx context.Context, title, reviewText string
 		UpdatedAt:  time.Now(),
 	})
 	if err != nil {
-		s.logger.Error("failed to add product review", zap.Error(err), zap.String("UserID", userID.String()), zap.String("ProductID", productID.String()))
-		return models.Review{}, fmt.Errorf("failed to add product review to db: %w", err)
+		logger.Error("failed to insert review", zap.Error(err))
+		return models.Review{}, fmt.Errorf("failed to add review: %w", err)
 	}
 	review := models.DatabaseReviewToReview(dbReview)
+	logger.Info("review added successfully")
 	return review, nil
 }
 
-// func (s *ReviewService) GetProductReviews(ctx context.Context, productID uuid.UUID) ([]models.Review, error) {
-// 	dbReviews, err := s.db.GetProductReviews(ctx, productID)
-// 	if err != nil {
-// 		if apperrors.IsNoRowsError(err) {
-// 			return []models.Review{}, nil
-// 		}
-// 		s.logger.Error("failed to retrieve product reviews from db", zap.Error(err), zap.String("productID", productID.String()))
-// 		return []models.Review{}, fmt.Errorf("failed to retrieve product reviews: %w", err)
-// 	}
-//
-// 	return models.DatabaseReviewsToReviews(dbReviews), nil
-// }
-
 func (s *ReviewService) GetProductReviews(ctx context.Context, productID uuid.UUID) ([]models.ReviewDisplay, error) {
+	logger := s.logger.With(
+		zap.String("method", "GetProductReviews"),
+		zap.String("productID", productID.String()),
+	)
 	dbReviews, err := s.db.GetProductReviews(ctx, productID)
 	if err != nil {
 		if apperrors.IsNoRowsError(err) {
+			logger.Info("user attempted to get reviews for a product that does not exist")
 			return []models.ReviewDisplay{}, nil
 		}
-		s.logger.Error("failed to retrieve product reviews from db", zap.Error(err), zap.String("productID", productID.String()))
+		logger.Error("failed to retrieve product reviews", zap.Error(err))
 		return []models.ReviewDisplay{}, fmt.Errorf("failed to retrieve product reviews: %w", err)
 	}
 
 	return models.DatabaseProductReviewsToReviewDisplays(dbReviews), nil
 }
 
-//	func (s *ReviewService) GetReviewByUserAndProduct(ctx context.Context, userID, productID uuid.UUID) (models.Review, error) {
-//		dbReview, err := s.db.GetReviewByUserAndProduct(ctx, database.GetReviewByUserAndProductParams{
-//			UserID:    userID,
-//			ProductID: productID,
-//		})
-//		if err != nil {
-//			if apperrors.IsNoRowsError(err) {
-//				return models.Review{}, fmt.Errorf("no user review for product found: %w", apperrors.ErrNotFound)
-//			}
-//			s.logger.Error("failed to retrieve user review for product", zap.Error(err),
-//				zap.String("userID", userID.String()), zap.String("productID", productID.String()))
-//			// TODO: update all errors and return apperrors
-//			return models.Review{}, fmt.Errorf("failed to retrieve user review for product: %w", apperrors.ErrInternal)
-//		}
-//		return models.DatabaseReviewToReview(dbReview), nil
-//	}
 func (s *ReviewService) GetReviewByUserAndProduct(ctx context.Context, userID, productID uuid.UUID) (models.ReviewDisplay, error) {
+
+	logger := s.logger.With(
+		zap.String("method", "GetReviewByUserAndProduct"),
+		zap.String("userID", userID.String()),
+		zap.String("productID", productID.String()),
+	)
+
 	dbReview, err := s.db.GetReviewByUserAndProduct(ctx, database.GetReviewByUserAndProductParams{
 		UserID:    userID,
 		ProductID: productID,
 	})
 	if err != nil {
 		if apperrors.IsNoRowsError(err) {
-			return models.ReviewDisplay{}, fmt.Errorf("no user review for product found: %w", apperrors.ErrNotFound)
+			logger.Error("user review for product not found", zap.Error(err))
+			return models.ReviewDisplay{}, fmt.Errorf("user review for product not found: %w", apperrors.ErrNotFound)
 		}
-		s.logger.Error("failed to retrieve user review for product", zap.Error(err),
-			zap.String("userID", userID.String()), zap.String("productID", productID.String()))
+		logger.Error("failed to retrieve user review", zap.Error(err))
 		// TODO: update all errors and return apperrors
-		return models.ReviewDisplay{}, fmt.Errorf("failed to retrieve user review for product: %w", apperrors.ErrInternal)
+		return models.ReviewDisplay{}, fmt.Errorf("failed to retrieve user review: %w", apperrors.ErrInternal)
 	}
 	return models.DatabaseUserProductReviewToReviewDisplay(dbReview), nil
 }
 
 func (s *ReviewService) DeleteReview(ctx context.Context, userID, productID uuid.UUID) error {
+	logger := s.logger.With(
+		zap.String("method", "DeleteReview"),
+		zap.String("userID", userID.String()),
+		zap.String("productID", productID.String()),
+	)
 	err := s.db.SetReviewStatusDeleted(ctx, database.SetReviewStatusDeletedParams{
 		UserID:    userID,
 		ProductID: productID,
 	})
 	if err != nil {
-		s.logger.Error("failed to change review status to deleted", zap.Error(err),
-			zap.String("userID", userID.String()), zap.String("productID", productID.String()))
-		return fmt.Errorf("failed to change review status to deleted: %w", apperrors.ErrInternal)
+		logger.Error("failed to update review status to deleted", zap.Error(err))
+		return fmt.Errorf("failed to delete review: %w", apperrors.ErrInternal)
 	}
+	logger.Info("review successfully deleted")
 	return nil
 }
 
-func (s *ReviewService) IsReviewOwner(ctx context.Context, reviewID, userID uuid.UUID) (bool, error) {
-	isOwner, err := s.db.IsReviewOwner(ctx, database.IsReviewOwnerParams{
-		ID:     reviewID,
-		UserID: userID,
-	})
-	if err != nil {
-		s.logger.Error("failed to determine review owner", zap.Error(err),
-			zap.String("reviewID", reviewID.String()), zap.String("userID", userID.String()))
+func (s *ReviewService) UpdateReview(ctx context.Context, userID, productID uuid.UUID, title, reviewText string, rating int, anonymous bool) (models.ReviewDisplay, error) {
+	logger := s.logger.With(
+		zap.String("method", "UpdateReview"),
+		zap.String("userID", userID.String()),
+		zap.String("productID", productID.String()),
+	)
 
-		return false, fmt.Errorf("failed to determine review owner: %w", apperrors.ErrInternal)
-	}
-
-	return isOwner, err
-}
-
-func (s *ReviewService) UpdateReview(ctx context.Context, userID, productID uuid.UUID, title, reviewText string, rating int, anonymous bool) (models.Review, error) {
 	reviewed, err := s.db.HasUserReviewedProduct(ctx, database.HasUserReviewedProductParams{
 		UserID:    userID,
 		ProductID: productID,
 	})
 	if err != nil {
-		s.logger.Error("failed to check if user already reviewed product", zap.Error(err), zap.String("userID", userID.String()),
-			zap.String("productID", productID.String()))
-		return models.Review{}, fmt.Errorf("failed to determine if user already reviewed product: %w", apperrors.ErrInternal)
+		s.logger.Error("failed to check if user already reviewed product", zap.Error(err))
+		return models.ReviewDisplay{}, fmt.Errorf("failed to check existing review: %w", apperrors.ErrInternal)
 	}
 
 	if !reviewed {
-		return models.Review{}, fmt.Errorf("user has not reviewed the product: %w", apperrors.ErrNotFound)
+		logger.Info("user attempted to update a non existent review")
+		return models.ReviewDisplay{}, fmt.Errorf("user has not reviewed the product: %w", apperrors.ErrNotFound)
 	}
 
-	review, err := s.db.UpdateUserReview(ctx, database.UpdateUserReviewParams{
+	_, err = s.db.UpdateUserReview(ctx, database.UpdateUserReviewParams{
 		Title: sql.NullString{
 			String: title,
 			Valid:  true,
@@ -182,10 +164,16 @@ func (s *ReviewService) UpdateReview(ctx context.Context, userID, productID uuid
 		Anonymous: anonymous,
 	})
 	if err != nil {
-		s.logger.Error("failed to update user review", zap.Error(err),
-			zap.String("userID", userID.String()), zap.String("productID", productID.String()))
-
-		return models.Review{}, fmt.Errorf("failed to update user review: %w", apperrors.ErrInternal)
+		logger.Error("failed to update review", zap.Error(err))
+		return models.ReviewDisplay{}, fmt.Errorf("failed to update review: %w", apperrors.ErrInternal)
 	}
-	return models.DatabaseReviewToReview(review), nil
+
+	updatedReview, err := s.GetReviewByUserAndProduct(ctx, userID, productID)
+	if err != nil {
+		logger.Error("failed to retrieve updated review", zap.Error(err))
+		return models.ReviewDisplay{}, fmt.Errorf("failed to retrieve updated review: %w", apperrors.ErrInternal)
+	}
+
+	logger.Info("review updated successfully")
+	return updatedReview, nil
 }
