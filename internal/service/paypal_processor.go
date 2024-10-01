@@ -17,6 +17,8 @@ type PayPalProcessor struct {
 	processorConfig *config.ProcessorConfig
 }
 
+// TODO: What happens if cart is empty and payment is made?
+
 // TODO: Maybe add below in PayPalProcessor struct
 var paymentSource = &paypal.PaymentSource{
 	Paypal: &paypal.PaymentSourcePaypal{

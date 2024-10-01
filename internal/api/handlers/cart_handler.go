@@ -26,24 +26,28 @@ func NewCartHandler(srv *service.CartService) *CartHandler {
 }
 
 func (h *CartHandler) GetCart(w http.ResponseWriter, r *http.Request) {
-	// Get UserID from jwt (request context)
-	_, claims, _ := jwtauth.FromContext(r.Context())
-	strUserID := ""
-	if claims["id"] != nil {
-		strUserID = claims["id"].(string)
-	} else {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+
+	ctx := r.Context()
+	logger := h.logger.With(zap.String("handler", "GetCart"))
+
+	_, claims, _ := jwtauth.FromContext(ctx)
+	strUserID, ok := claims["id"].(string)
+	if !ok {
+		logger.Error("user id not found in token claims")
+		utils.RespondWithError(w, http.StatusUnauthorized, "Invalid authentication")
 		return
 	}
 	userID, err := uuid.Parse(strUserID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+		logger.Error("failed to parse user id", zap.Error(err), zap.String("userID", strUserID))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
 		return
 	}
 
-	cart, err := h.srv.GetCart(r.Context(), userID)
+	cart, err := h.srv.GetCart(ctx, userID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusNotFound, "couldn't get cart")
+		logger.Error("failed to retrieve user cart", zap.Error(err), zap.String("userID", userID.String()))
+		utils.RespondWithError(w, http.StatusNotFound, "Failed to retrieve user cart")
 		return
 	}
 
@@ -51,128 +55,135 @@ func (h *CartHandler) GetCart(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CartHandler) AddToCart(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+	logger := h.logger.With(zap.String("handler", "AddToCart"))
+
 	type CartInput struct {
 		ProductID uuid.UUID `json:"productId"`
 		Quantity  int       `json:"quantity"`
 	}
 
-	cartInput := &CartInput{}
-
-	if err := json.NewDecoder(r.Body).Decode(&cartInput); err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "invalid parameters")
-		return
-	}
-
-	if cartInput.Quantity < 0 {
-		cartInput.Quantity = 0
-	}
-
-	// Get UserID from jwt (request context)
-	_, claims, _ := jwtauth.FromContext(r.Context())
-	strUserID := ""
-	if claims["id"] != nil {
-		strUserID = claims["id"].(string)
-	} else {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+	_, claims, _ := jwtauth.FromContext(ctx)
+	strUserID, ok := claims["id"].(string)
+	if !ok {
+		logger.Error("user id not found in token claims")
+		utils.RespondWithError(w, http.StatusUnauthorized, "Invalid authentication")
 		return
 	}
 	userID, err := uuid.Parse(strUserID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+		logger.Error("failed to parse user id", zap.Error(err), zap.String("userID", strUserID))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
 		return
 	}
 
-	err = h.srv.AddToCart(r.Context(), userID, cartInput.ProductID, cartInput.Quantity)
+	var cartInput CartInput
+
+	if err := json.NewDecoder(r.Body).Decode(&cartInput); err != nil {
+		logger.Warn("failed to decode request body", zap.Error(err))
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if cartInput.Quantity < 1 {
+		logger.Warn("user provided invalid product quantity", zap.String("userID", userID.String()), zap.Int("quantity", cartInput.Quantity))
+		utils.RespondWithError(w, http.StatusBadRequest, "Quantity must be greater than 0")
+		return
+	}
+
+	err = h.srv.AddToCart(ctx, userID, cartInput.ProductID, cartInput.Quantity)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "failed to add item to cart")
+		logger.Error("failed to add item to cart", zap.Error(err), zap.String("userID", userID.String()), zap.String("productID", cartInput.ProductID.String()))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to add item to cart")
 		return
 	}
-	type successResponse struct {
-		Msg string `json:"msg"`
-	}
 
-	utils.RespondWithJson(w, http.StatusOK, successResponse{
-		Msg: "item added successfully",
+	utils.RespondWithJson(w, http.StatusOK, map[string]interface{}{
+		"message": "Succesfully added item to cart",
 	})
 }
 
 func (h *CartHandler) RemoveFromCart(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+	logger := h.logger.With(zap.String("handler", "RemoveFromCart"))
+
 	type CartInput struct {
 		ProductID uuid.UUID `json:"productId"`
 	}
 
-	cartInput := &CartInput{}
-
-	if err := json.NewDecoder(r.Body).Decode(&cartInput); err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "invalid parameters")
-		return
-	}
-
-	// Get UserID from jwt (request context)
-	_, claims, _ := jwtauth.FromContext(r.Context())
-	strUserID := ""
-	if claims["id"] != nil {
-		strUserID = claims["id"].(string)
-	} else {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+	_, claims, _ := jwtauth.FromContext(ctx)
+	strUserID, ok := claims["id"].(string)
+	if !ok {
+		logger.Error("user id not found in token claims")
+		utils.RespondWithError(w, http.StatusUnauthorized, "Invalid authentication")
 		return
 	}
 	userID, err := uuid.Parse(strUserID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+		logger.Error("failed to parse user id", zap.Error(err), zap.String("userID", strUserID))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
 		return
 	}
 
-	err = h.srv.RemoveFromCart(r.Context(), userID, cartInput.ProductID)
+	var cartInput CartInput
+	if err := json.NewDecoder(r.Body).Decode(&cartInput); err != nil {
+		logger.Warn("failed to decode request body", zap.Error(err))
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	err = h.srv.RemoveFromCart(ctx, userID, cartInput.ProductID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "failed to add item to cart")
+		logger.Error("failed to remove item from cart", zap.Error(err), zap.String("userID", userID.String()), zap.String("productID", cartInput.ProductID.String()))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to remove item from cart")
 		return
 	}
-	type successResponse struct {
-		Msg string `json:"msg"`
-	}
-
-	utils.RespondWithJson(w, http.StatusOK, successResponse{
-		Msg: "item removed successfully",
+	utils.RespondWithJson(w, http.StatusOK, map[string]interface{}{
+		"message": "Item removed succesfully",
 	})
 }
 
 func (h *CartHandler) ReduceFromCart(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+	logger := h.logger.With(zap.String("handler", "ReduceFromCart"))
+
 	type CartInput struct {
 		ProductID uuid.UUID `json:"productId"`
 	}
 
-	cartInput := &CartInput{}
+	var cartInput CartInput
 
 	if err := json.NewDecoder(r.Body).Decode(&cartInput); err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "invalid parameters")
+		logger.Warn("failed to decode request body", zap.Error(err))
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	// Get UserID from jwt (request context)
-	_, claims, _ := jwtauth.FromContext(r.Context())
-	strUserID := ""
-	if claims["id"] != nil {
-		strUserID = claims["id"].(string)
-	} else {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+	_, claims, _ := jwtauth.FromContext(ctx)
+	strUserID, ok := claims["id"].(string)
+	if !ok {
+		logger.Error("user id not found in token claims")
+		utils.RespondWithError(w, http.StatusUnauthorized, "Invalid authentication")
 		return
 	}
 	userID, err := uuid.Parse(strUserID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+		logger.Error("failed to parse user id", zap.Error(err), zap.String("userID", strUserID))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
 		return
 	}
 
 	err = h.srv.ReduceFromCart(r.Context(), userID, cartInput.ProductID, 1)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "failed to reduce product quantity")
+		logger.Error("failed to reduce cart item quantity", zap.Error(err), zap.String("userID", userID.String()), zap.String("productID", cartInput.ProductID.String()))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to reduce cart item quantity")
 		return
 	}
-	type successResponse struct {
-		Msg string `json:"msg"`
-	}
-	utils.RespondWithJson(w, http.StatusOK, successResponse{
-		Msg: "Quantity reduced successfully",
+
+	utils.RespondWithJson(w, http.StatusOK, map[string]interface{}{
+		"message": "Succesfully reduced cart item quantity",
 	})
 }

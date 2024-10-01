@@ -91,12 +91,3 @@ func DatabaseUserProductReviewToReviewDisplay(dbReview database.GetReviewByUserA
 		UpdatedAt:  dbReview.UpdatedAt,
 	}
 }
-
-// TODO: Might not be necessary for the below
-func DatabaseUserProductReviewToReviewDisplays(dbReviews []database.GetReviewByUserAndProductRow) []ReviewDisplay {
-	reviews := make([]ReviewDisplay, 0, len(dbReviews))
-	for _, dbRev := range dbReviews {
-		reviews = append(reviews, DatabaseUserProductReviewToReviewDisplay(dbRev))
-	}
-	return reviews
-}
