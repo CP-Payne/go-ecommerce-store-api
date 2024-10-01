@@ -27,21 +27,28 @@ func NewProductHandler(srv *service.ProductService) *ProductHandler {
 }
 
 func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+	logger := h.logger.With(zap.String("handler", "GetProduct"))
+
 	strID := chi.URLParam(r, "id")
 	id, err := uuid.Parse(strID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "invalid product id")
+		logger.Warn("invalid product id", zap.Error(err), zap.String("productID", strID))
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
 		return
 	}
 
-	product, err := h.srv.GetProduct(r.Context(), id)
+	product, err := h.srv.GetProduct(ctx, id)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrNotFound) {
-			utils.RespondWithError(w, http.StatusNotFound, "product not found")
+			logger.Info("product not found", zap.Error(err), zap.String("productID", strID))
+			utils.RespondWithError(w, http.StatusNotFound, "Product not found")
 			return
 		}
-		utils.RespondWithError(w, http.StatusInternalServerError, "failed to retrieve product")
-		h.logger.Info("failed to retrieve product", zap.Error(err), zap.String("productID", strID))
+
+		logger.Info("failed to retrieve product", zap.Error(err), zap.String("productID", strID))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve product")
 		return
 	}
 
@@ -49,41 +56,54 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) GetAllProducts(w http.ResponseWriter, r *http.Request) {
-	products, err := h.srv.GetAllProducts(r.Context())
+	ctx := r.Context()
+	logger := h.logger.With(zap.String("handler", "GetAllProducts"))
+
+	products, err := h.srv.GetAllProducts(ctx)
 	if err != nil {
-		h.logger.Error("failed to respond with product list", zap.Error(err))
-		utils.RespondWithError(w, http.StatusInternalServerError, "failed to retrieve products")
+		logger.Error("failed to retrieve product list", zap.Error(err))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve products")
 		return
 	}
 	utils.RespondWithJson(w, http.StatusOK, products)
 }
 
 func (h *ProductHandler) GetProductCategories(w http.ResponseWriter, r *http.Request) {
-	categories, err := h.srv.GetProductCategories(r.Context())
+	ctx := r.Context()
+	logger := h.logger.With(zap.String("handler", "GetProductCategories"))
+
+	categories, err := h.srv.GetProductCategories(ctx)
 	if err != nil {
-		h.logger.Error("failed to respond with category list", zap.Error(err))
-		utils.RespondWithError(w, http.StatusInternalServerError, "failed to retrieve categories")
+		logger.Error("failed to retrieve product categories", zap.Error(err))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve product categories")
 		return
 	}
 	utils.RespondWithJson(w, http.StatusOK, categories)
 }
 
 func (h *ProductHandler) GetProductsByCategory(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+	logger := h.logger.With(zap.String("handler", "GetProductsByCategory"))
+
 	strID := chi.URLParam(r, "id")
 	id, err := uuid.Parse(strID)
 	if err != nil {
-		http.Error(w, "invalid category id", http.StatusBadRequest)
+
+		logger.Warn("invalid category id", zap.Error(err), zap.String("productID", strID))
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid category ID")
 		return
 	}
 
-	products, err := h.srv.GetProductsByCategory(r.Context(), id)
+	products, err := h.srv.GetProductsByCategory(ctx, id)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrNotFound) {
-			utils.RespondWithError(w, http.StatusNotFound, "no products for provided category")
+			logger.Info("no products for the provided category found", zap.Error(err))
+			utils.RespondWithError(w, http.StatusNotFound, "No products for provided category found")
 			return
 		}
-		utils.RespondWithError(w, http.StatusInternalServerError, "failed to retrieve products")
-		h.logger.Error("failed to retrieve products", zap.Error(err), zap.String("categoryID", strID))
+		logger.Error("failed to retrieve products for category", zap.Error(err), zap.String("categoryID", strID))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve products for category")
 		return
 	}
 

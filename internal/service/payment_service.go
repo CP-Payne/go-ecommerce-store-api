@@ -80,11 +80,3 @@ func (p *PaymentService) CaptureOrder(ctx context.Context, orderID string) error
 
 	return nil
 }
-
-// func (p *PaymentService) GetOrderDetails(ctx context.Context, orderID string) error {
-// 	err := p.paymentProcessor.GetOrderDetails(ctx, orderID)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
