@@ -28,22 +28,33 @@ func NewUserService(db *database.Queries) *UserService {
 }
 
 func (s *UserService) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
+	logger := s.logger.With(
+		zap.String("method", "GetUserByEmail"),
+		zap.String("email", email),
+	)
 	dbUser, err := s.db.GetUserByEmail(ctx, email)
 	if err != nil {
 		if apperrors.IsNoRowsError(err) {
-			return models.User{}, fmt.Errorf("user not found: %w", apperrors.ErrNotFound)
+			logger.Error("user information for email not found", zap.Error(err))
+			return models.User{}, fmt.Errorf("user information for email not found: %w", apperrors.ErrNotFound)
 		}
-		s.logger.Error("failed to retrieve user from db", zap.Error(err), zap.String("email", email))
+		logger.Error("failed to retrieve user information by email", zap.Error(err))
 		return models.User{}, fmt.Errorf("failed to retrieve user: %w", err)
 	}
 	return models.DatabaseUserToUser(dbUser), nil
 }
 
 func (s *UserService) CreateUser(ctx context.Context, email, name, password string) (models.User, error) {
+
+	logger := s.logger.With(
+		zap.String("method", "CreateUser"),
+		zap.String("email", email),
+	)
+
 	hashedPassword, err := hashing.HashPassword(password)
 	if err != nil {
-		s.logger.Error("failed to hash user password", zap.String("user", email), zap.Error(err))
-		return models.User{}, fmt.Errorf("failed to create user: %w", err)
+		logger.Error("failed to hash user password", zap.String("user", email), zap.Error(err))
+		return models.User{}, fmt.Errorf("failed to hash user password: %w", err)
 	}
 
 	dbUser, err := s.db.CreateUser(ctx, database.CreateUserParams{
@@ -59,23 +70,32 @@ func (s *UserService) CreateUser(ctx context.Context, email, name, password stri
 	})
 	if err != nil {
 		if apperrors.IsUniqueViolation(err) {
-			return models.User{}, fmt.Errorf("email already exists: %w", apperrors.ErrConflict)
+			logger.Info("user attempted to register with email that already exists", zap.String("user", email), zap.Error(err))
+			return models.User{}, fmt.Errorf("failed to create user: %w", apperrors.ErrConflict)
 		}
+		logger.Error("failed to create new user", zap.String("user", email), zap.Error(err))
 		return models.User{}, fmt.Errorf("failed to create user: %w", err)
 	}
 
+	logger.Info("user successfully created", zap.String("email", dbUser.Email))
 	return models.DatabaseUserToUser(dbUser), nil
 }
 
 func (s *UserService) GetUserProfile(ctx context.Context, userID uuid.UUID) (models.UserProfile, error) {
+
+	logger := s.logger.With(
+		zap.String("method", "GetUserProfile"),
+		zap.String("userID", userID.String()),
+	)
+
 	userDetailsRow, err := s.db.GetUserDetails(ctx, userID)
 	if err != nil {
 		if apperrors.IsNoRowsError(err) {
-			return models.UserProfile{}, fmt.Errorf("user not found: %w", apperrors.ErrNotFound)
+			logger.Info("user profile not found", zap.Error(err))
+			return models.UserProfile{}, fmt.Errorf("failed to retrieve user profile: %w", apperrors.ErrNotFound)
 		}
-		s.logger.Error("failed to retrieve userDetails from db", zap.Error(err), zap.String("userID", userID.String()))
-		return models.UserProfile{}, fmt.Errorf("failed to retrieve user details: %w", err)
-
+		logger.Error("failed to retrieve user profile", zap.Error(err))
+		return models.UserProfile{}, fmt.Errorf("failed to retrieve user profile: %w", err)
 	}
 
 	return models.UserProfile{

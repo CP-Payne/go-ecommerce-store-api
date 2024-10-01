@@ -25,23 +25,27 @@ func NewUserHandler(userSrv *service.UserService) *UserHandler {
 }
 
 func (h *UserHandler) GetUserDetails(w http.ResponseWriter, r *http.Request) {
-	_, claims, _ := jwtauth.FromContext(r.Context())
-	strUserID := ""
-	if claims["id"] != nil {
-		strUserID = claims["id"].(string)
-	} else {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+	ctx := r.Context()
+	logger := h.logger.With(zap.String("handler", "GetUserDetails"))
+
+	_, claims, _ := jwtauth.FromContext(ctx)
+	strUserID, ok := claims["id"].(string)
+	if !ok {
+		logger.Error("user id not found in token claims")
+		utils.RespondWithError(w, http.StatusUnauthorized, "Invalid authentication")
 		return
 	}
 	userID, err := uuid.Parse(strUserID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "something went wrong")
+		logger.Error("failed to parse user id", zap.Error(err), zap.String("userID", strUserID))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
 		return
 	}
 
-	user, err := h.srvUser.GetUserProfile(r.Context(), userID)
+	user, err := h.srvUser.GetUserProfile(ctx, userID)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "failed to retrieve user information")
+		logger.Error("failed to retrieve user information", zap.Error(err), zap.String("userID", userID.String()))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve user information")
 		return
 	}
 
