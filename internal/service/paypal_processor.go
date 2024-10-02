@@ -17,9 +17,6 @@ type PayPalProcessor struct {
 	processorConfig *config.ProcessorConfig
 }
 
-// TODO: What happens if cart is empty and payment is made?
-
-// TODO: Maybe add below in PayPalProcessor struct
 var paymentSource = &paypal.PaymentSource{
 	Paypal: &paypal.PaymentSourcePaypal{
 		ExperienceContext: paypal.PaymentSourcePaypalExperienceContext{
@@ -52,13 +49,17 @@ func NewPayPalProcessor(pconf *config.ProcessorConfig) (*PayPalProcessor, error)
 }
 
 func (p *PayPalProcessor) CreateProcessorOrder(ctx context.Context, order *models.Order) (*models.OrderResult, error) {
+
+	logger := p.logger.With(
+		zap.String("method", "CreateProcessorOrder"),
+	)
+
 	items, err := p.orderItemsToPaypalItems(order.OrderItems)
 	if err != nil {
-		p.logger.Error("failed to create order", zap.Error(err))
-		return nil, fmt.Errorf("failed to create order: %w", err)
+		logger.Error("failed to convert order items into paypal items", zap.Error(err))
+		return nil, fmt.Errorf("failed to process order items into paypal items: %w", err)
 	}
 
-	// p.logger.Debug("items", zap.Any("items", items))
 	units := []paypal.PurchaseUnitRequest{
 		{
 			Amount: &paypal.PurchaseUnitAmount{
@@ -79,12 +80,10 @@ func (p *PayPalProcessor) CreateProcessorOrder(ctx context.Context, order *model
 		},
 	}
 
-	// p.logger.Debug("full units", zap.Any("units", units))
-
 	processorOrder, err := p.client.CreateOrder(ctx, paypal.OrderIntentCapture, units, paymentSource, nil)
 	if err != nil {
-		p.logger.Error("failed to create order", zap.Error(err), zap.String("orderID", order.ID.String()))
-		return nil, fmt.Errorf("failed to create order: %w", err)
+		logger.Error("failed to create paypal order", zap.Error(err), zap.String("orderID", order.ID.String()))
+		return nil, fmt.Errorf("failed to create paypal order: %w", err)
 	}
 	orderLinks := processorOrder.Links
 	var approveLink string
@@ -100,20 +99,23 @@ func (p *PayPalProcessor) CreateProcessorOrder(ctx context.Context, order *model
 		ApproveLink: approveLink,
 		Status:      "",
 	}
+	logger.Info("paypal order created", zap.String("orderID", orderResult.ID))
 	return &orderResult, nil
 }
 
-// TODO: Fix dry code
-// TODO: Create separate function for price calculation and item creation
-
 func (p *PayPalProcessor) CaptureOrder(ctx context.Context, processorOrderID string) (*models.OrderResult, error) {
-	// TODO: Return orderResponse and save it to db
+
+	logger := p.logger.With(
+		zap.String("method", "CaptureOrder"),
+		zap.String("paypalOrderID", processorOrderID),
+	)
+
 	orderResponse, err := p.client.CaptureOrder(ctx, processorOrderID, paypal.CaptureOrderRequest{
 		PaymentSource: nil,
 	})
 	if err != nil {
-		p.logger.Error("failed to capture order", zap.Error(err))
-		return &models.OrderResult{}, fmt.Errorf("failed to capture order: %w", err)
+		logger.Error("failed to capture paypal order", zap.Error(err))
+		return &models.OrderResult{}, fmt.Errorf("failed to capture paypal order: %w", err)
 	}
 
 	orderResult := models.OrderResult{
@@ -124,15 +126,13 @@ func (p *PayPalProcessor) CaptureOrder(ctx context.Context, processorOrderID str
 		PayerID:      orderResponse.Payer.PayerID,
 	}
 
+	logger.Info("paypal payment captured", zap.Any("orderResult", orderResult))
 	return &orderResult, nil
 }
 
-// TODO: Add the new error to apperrors
-
 func (p *PayPalProcessor) orderItemsToPaypalItems(orderItems []models.OrderItem) ([]paypal.Item, error) {
 	if len(orderItems) <= 0 {
-		p.logger.Error("failed to convert orderItems to paypal items. no orderItems provided")
-		return nil, fmt.Errorf("failed to convert orderItems to paypal items: %w", errors.New("no order items"))
+		return nil, fmt.Errorf("cannot conver orderItems to paypal items: %w", errors.New("no order items"))
 	}
 
 	paypalItems := make([]paypal.Item, 0, len(orderItems))
@@ -151,15 +151,3 @@ func (p *PayPalProcessor) orderItemsToPaypalItems(orderItems []models.OrderItem)
 
 	return paypalItems, nil
 }
-
-// func (p *PayPalProcessor) GetOrderDetails(ctx context.Context, orderID string) error {
-// 	order, err := p.client.GetOrder(ctx, orderID)
-// 	if err != nil {
-// 		p.logger.Error("failed to retrieve order details", zap.Error(err))
-// 		return fmt.Errorf("failed to retrieve order details: %w", err)
-// 	}
-//
-// 	p.logger.Debug("GetOrderDetails: ", zap.Any("ORDER", order))
-//
-// 	return nil
-// }
