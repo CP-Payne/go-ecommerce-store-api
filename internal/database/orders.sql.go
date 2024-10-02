@@ -170,6 +170,35 @@ func (q *Queries) GetOrderItemsByOrderID(ctx context.Context, orderID uuid.UUID)
 	return items, nil
 }
 
+const getUserOrderIDs = `-- name: GetUserOrderIDs :many
+SELECT id
+FROM orders
+WHERE user_id = $1 AND status = 'COMPLETED'
+`
+
+func (q *Queries) GetUserOrderIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, getUserOrderIDs, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const setOrderCompleted = `-- name: SetOrderCompleted :exec
 UPDATE orders
     SET  status=$1, payment_email=$2, payer_id=$3, updated_at=$4

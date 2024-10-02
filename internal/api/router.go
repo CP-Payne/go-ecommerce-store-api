@@ -39,6 +39,7 @@ func SetupRouter(cfg *config.Config) http.Handler {
 	cartHandler := handlers.NewCartHandler(cartSrv)
 	userHandler := handlers.NewUserHandler(userSrv)
 	paymentHandler := handlers.NewPaymentHandler(productSrv, paymentSrv, cartSrv, orderSrv)
+	orderHandler := handlers.NewOrderHandler(orderSrv)
 
 	r.Group(func(r chi.Router) {
 		r.Post("/register", authHandler.RegisterUser)
@@ -59,6 +60,7 @@ func SetupRouter(cfg *config.Config) http.Handler {
 		r.Use(jwtauth.Authenticator)
 
 		r.Get("/user/profile", userHandler.GetUserDetails)
+		r.Get("/user/orders", orderHandler.GetUserOrders)
 
 		r.Post("/products/create-order", paymentHandler.CreateOrderProduct)
 		r.Post("/cart/create-order", paymentHandler.CreateOrderCart)
@@ -67,6 +69,7 @@ func SetupRouter(cfg *config.Config) http.Handler {
 		r.Post("/cart/add", cartHandler.AddToCart)
 		r.Post("/cart/remove", cartHandler.RemoveFromCart)
 		r.Post("/cart/reduce", cartHandler.ReduceFromCart)
+
 	})
 
 	r.Group(func(r chi.Router) {

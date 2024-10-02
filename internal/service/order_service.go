@@ -119,6 +119,37 @@ func (s *OrderService) CreateOrder(ctx context.Context, cart models.Cart, tempCa
 	return order, nil
 }
 
+func (s *OrderService) GetUserOrders(ctx context.Context, userID uuid.UUID) ([]models.Order, error) {
+	logger := s.logger.With(
+		zap.String("method", "GetUserOrders"),
+		zap.String("userID", userID.String()),
+	)
+
+	orderIDs, err := s.db.GetUserOrderIDs(ctx, userID)
+	if err != nil {
+		logger.Error("failed to retrieve order IDs", zap.Error(err))
+		return []models.Order{}, fmt.Errorf("failed to retrieve order IDs: %w", err)
+	}
+
+	userOrders := make([]models.Order, 0, len(orderIDs))
+
+	for _, id := range orderIDs {
+		order, err := s.GetOrderByID(ctx, id)
+		if err != nil {
+			logger.Error("failed to get order information", zap.Error(err), zap.String("orderID", id.String()))
+		}
+
+		order.CartID = nil
+		order.PayerID = ""
+		order.PaymentEmail = ""
+		order.ProcessorOrderID = ""
+		order.Status = ""
+		userOrders = append(userOrders, order)
+	}
+
+	return userOrders, nil
+}
+
 func (s *OrderService) GetOrderByID(ctx context.Context, orderID uuid.UUID) (models.Order, error) {
 
 	logger := s.logger.With(

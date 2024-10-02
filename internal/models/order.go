@@ -22,15 +22,15 @@ type Order struct {
 	ID               uuid.UUID   `json:"id"`
 	ProductTotal     float32     `json:"productTotal"`
 	OrderTotal       float32     `json:"orderTotal"`
-	ProcessorOrderID string      `json:"processorOrderId"`
-	Status           string      `json:"status"`
+	ProcessorOrderID string      `json:"processorOrderId,omitempty"`
+	Status           string      `json:"status,omitempty"`
 	UserID           uuid.UUID   `json:"userId"`
 	OrderItems       []OrderItem `json:"items"`
-	PaymentEmail     string      `json:"paymentEmail"`
+	PaymentEmail     string      `json:"paymentEmail,omitempty"`
 	PaymentMethod    string      `json:"paymentMethod"`
-	PayerID          string      `json:"payerId"`
+	PayerID          string      `json:"payerId,omitempty"`
 	ShippingPrice    float32     `json:"shippingPrice"`
-	CartID           *uuid.UUID  `json:"cartId;omitempty"`
+	CartID           *uuid.UUID  `json:"cartId,omitempty"`
 	CreatedAt        time.Time   `json:"createdAt"`
 	UpdatedAt        time.Time   `json:"updatedAt"`
 }

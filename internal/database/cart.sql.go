@@ -61,30 +61,6 @@ func (q *Queries) DeleteCart(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const deleteCartItemIfZero = `-- name: DeleteCartItemIfZero :exec
-WITH current_quantity AS (
-    SELECT quantity
-    FROM cart_items ci
-    WHERE ci.cart_id = $1 AND ci.product_id = $2
-)
-DELETE FROM cart_items
-WHERE ci.cart_id = $1 AND ci.product_id = $2
-AND (
-    SELECT ci.quantity FROM current_quantity
-) <= $3
-`
-
-type DeleteCartItemIfZeroParams struct {
-	CartID    uuid.UUID
-	ProductID uuid.UUID
-	Quantity  int32
-}
-
-func (q *Queries) DeleteCartItemIfZero(ctx context.Context, arg DeleteCartItemIfZeroParams) error {
-	_, err := q.db.ExecContext(ctx, deleteCartItemIfZero, arg.CartID, arg.ProductID, arg.Quantity)
-	return err
-}
-
 const getActiveCart = `-- name: GetActiveCart :one
 SELECT id, user_id, status, created_at
 FROM carts
@@ -229,30 +205,5 @@ type RemoveItemFromCartParams struct {
 
 func (q *Queries) RemoveItemFromCart(ctx context.Context, arg RemoveItemFromCartParams) error {
 	_, err := q.db.ExecContext(ctx, removeItemFromCart, arg.CartID, arg.ProductID)
-	return err
-}
-
-const updateCartItemQuantity = `-- name: UpdateCartItemQuantity :exec
-WITH current_quantity AS (
-    SELECT ci.quantity
-    FROM cart_items ci
-    WHERE ci.cart_id = $1 AND ci.product_id = $2
-)
-UPDATE cart_items
-SET ci.quantity = ci.quantity - $3
-WHERE ci.cart_id = $1 AND ci.product_id = $2
-AND (
-    SELECT ci.quantity FROM current_quantity
-) > $3
-`
-
-type UpdateCartItemQuantityParams struct {
-	CartID    uuid.UUID
-	ProductID uuid.UUID
-	Quantity  int32
-}
-
-func (q *Queries) UpdateCartItemQuantity(ctx context.Context, arg UpdateCartItemQuantityParams) error {
-	_, err := q.db.ExecContext(ctx, updateCartItemQuantity, arg.CartID, arg.ProductID, arg.Quantity)
 	return err
 }

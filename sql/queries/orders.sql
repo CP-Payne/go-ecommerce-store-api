@@ -33,3 +33,8 @@ UPDATE orders
 UPDATE orders
     SET  status=$1, payment_email=$2, payer_id=$3, updated_at=$4
     WHERE processor_order_id=$5;
+
+-- name: GetUserOrderIDs :many
+SELECT id
+FROM orders
+WHERE user_id = $1 AND status = 'COMPLETED';
