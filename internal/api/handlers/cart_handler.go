@@ -47,7 +47,7 @@ func (h *CartHandler) GetCart(w http.ResponseWriter, r *http.Request) {
 	cart, err := h.srv.GetCart(ctx, userID)
 	if err != nil {
 		logger.Error("failed to retrieve user cart", zap.Error(err), zap.String("userID", userID.String()))
-		utils.RespondWithError(w, http.StatusNotFound, "Failed to retrieve user cart")
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve user cart")
 		return
 	}
 
