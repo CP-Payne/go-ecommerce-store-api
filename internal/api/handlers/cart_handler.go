@@ -13,15 +13,17 @@ import (
 )
 
 type CartHandler struct {
-	srv    *service.CartService
-	logger *zap.Logger
+	srvCart    *service.CartService
+	srvProduct *service.ProductService
+	logger     *zap.Logger
 }
 
-func NewCartHandler(srv *service.CartService) *CartHandler {
+func NewCartHandler(srvCart *service.CartService, srvProduct *service.ProductService) *CartHandler {
 	logger := config.GetLogger()
 	return &CartHandler{
-		srv:    srv,
-		logger: logger,
+		srvCart:    srvCart,
+		srvProduct: srvProduct,
+		logger:     logger,
 	}
 }
 
@@ -44,7 +46,7 @@ func (h *CartHandler) GetCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cart, err := h.srv.GetCart(ctx, userID)
+	cart, err := h.srvCart.GetCart(ctx, userID)
 	if err != nil {
 		logger.Error("failed to retrieve user cart", zap.Error(err), zap.String("userID", userID.String()))
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve user cart")
@@ -92,7 +94,21 @@ func (h *CartHandler) AddToCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.srv.AddToCart(ctx, userID, cartInput.ProductID, cartInput.Quantity)
+	// Check if the product exists
+	productExists, err := h.srvProduct.ProductExists(r.Context(), cartInput.ProductID)
+	if err != nil {
+		logger.Error("failed to check product existence", zap.Error(err), zap.String("productID", cartInput.ProductID.String()))
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
+		return
+	}
+
+	if !productExists {
+		logger.Warn("product does not exist", zap.String("productID", cartInput.ProductID.String()))
+		utils.RespondWithError(w, http.StatusNotFound, "Product not found")
+		return
+	}
+
+	err = h.srvCart.AddToCart(ctx, userID, cartInput.ProductID, cartInput.Quantity)
 	if err != nil {
 		logger.Error("failed to add item to cart", zap.Error(err), zap.String("userID", userID.String()), zap.String("productID", cartInput.ProductID.String()))
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to add item to cart")
@@ -134,7 +150,7 @@ func (h *CartHandler) RemoveFromCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.srv.RemoveFromCart(ctx, userID, cartInput.ProductID)
+	err = h.srvCart.RemoveFromCart(ctx, userID, cartInput.ProductID)
 	if err != nil {
 		logger.Error("failed to remove item from cart", zap.Error(err), zap.String("userID", userID.String()), zap.String("productID", cartInput.ProductID.String()))
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to remove item from cart")
@@ -176,7 +192,7 @@ func (h *CartHandler) ReduceFromCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.srv.ReduceFromCart(r.Context(), userID, cartInput.ProductID, 1)
+	err = h.srvCart.ReduceFromCart(r.Context(), userID, cartInput.ProductID, 1)
 	if err != nil {
 		logger.Error("failed to reduce cart item quantity", zap.Error(err), zap.String("userID", userID.String()), zap.String("productID", cartInput.ProductID.String()))
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to reduce cart item quantity")

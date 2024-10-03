@@ -36,7 +36,7 @@ func SetupRouter(cfg *config.Config) http.Handler {
 	authHandler := handlers.NewAuthHandler(userSrv)
 	productHandler := handlers.NewProductHandler(productSrv)
 	reviewHander := handlers.NewReviewHandler(reviewSrv, productSrv)
-	cartHandler := handlers.NewCartHandler(cartSrv)
+	cartHandler := handlers.NewCartHandler(cartSrv, productSrv)
 	userHandler := handlers.NewUserHandler(userSrv)
 	paymentHandler := handlers.NewPaymentHandler(productSrv, paymentSrv, cartSrv, orderSrv)
 	orderHandler := handlers.NewOrderHandler(orderSrv)
