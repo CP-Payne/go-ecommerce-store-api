@@ -64,6 +64,22 @@ func (h *PaymentHandler) CreateOrderCart(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Check product quantity and cart quantity
+	for _, ci := range cart.Items {
+		product, err := h.srvProduct.GetProduct(ctx, ci.ProductID)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to process request")
+			logger.Info("failed to retrieve product during checkout", zap.Error(err), zap.String("productID", ci.ProductID.String()))
+			return
+		}
+
+		if ci.Quantity > product.Stock {
+			logger.Warn("insufficient stock to create order", zap.String("ProductID", ci.ProductID.String()), zap.String("CartID", cart.ID.String()), zap.String("UserID", userID.String()))
+			utils.RespondWithError(w, http.StatusBadRequest, "Not enough stock")
+			return
+		}
+	}
+
 	order, err := h.srvOrder.CreateOrder(ctx, cart, false)
 	if err != nil {
 		logger.Error("failed to create order for user", zap.Error(err), zap.String("userID", userID.String()))
