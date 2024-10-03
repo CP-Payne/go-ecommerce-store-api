@@ -48,7 +48,7 @@ func SetupRouter(cfg *config.Config) http.Handler {
 		r.Get("/products", productHandler.GetAllProducts)
 		r.Get("/products/{id}", productHandler.GetProduct)
 
-		r.Get("/products/complete-order", paymentHandler.CaptureOrder)
+		r.Get("/payment/capture-order", paymentHandler.CaptureOrder)
 
 		r.Get("/products/categories", productHandler.GetProductCategories)
 		r.Get("/products/categories/{id}", productHandler.GetProductsByCategory)
@@ -62,8 +62,8 @@ func SetupRouter(cfg *config.Config) http.Handler {
 		r.Get("/user/profile", userHandler.GetUserDetails)
 		r.Get("/user/orders", orderHandler.GetUserOrders)
 
-		r.Post("/products/create-order", paymentHandler.CreateOrderProduct)
-		r.Post("/cart/create-order", paymentHandler.CreateOrderCart)
+		r.Post("/payment/create-order/product", paymentHandler.CreateOrderProduct)
+		r.Post("/payment/create-order/cart", paymentHandler.CreateOrderCart)
 
 		r.Get("/cart", cartHandler.GetCart)
 		r.Post("/cart/add", cartHandler.AddToCart)

@@ -26,8 +26,8 @@ var paymentSource = &paypal.PaymentSource{
 			UserAction:              "PAY_NOW",
 			PaymentMethodPreference: "UNRESTRICTED",
 			Locale:                  "en-US",
-			ReturnURL:               "http://localhost:3000/products/complete-order",
-			CancelURL:               "http://localhost:3000/products/cancel-order",
+			ReturnURL:               "http://localhost:3000/payment/capture-order",
+			CancelURL:               "http://localhost:3000/payment/cancel-order",
 		},
 	},
 }
