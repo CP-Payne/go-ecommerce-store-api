@@ -1,0 +1,3790 @@
+{
+	"info": {
+		"_postman_id": "d4851731-4061-4b6e-8fce-17ffc42b02db",
+		"name": "Ecommerce Store Documentation",
+		"description": "The **Ecommerce Store API** provides a full set of functionalities needed for an online store. With this API, you can manage user authentication (registration, login), cart operations, payments (using PayPal), product listings, reviews, and order management.\n\n## **Getting started guide**\n\nTo start using the **Ecommerce Store API**, follow these steps:\n\n1. **Set up the Backend:**\n    \n    - Ensure that the backend service for this ecommerce store is running.\n        \n    - You can find setup instructions in the following GitHub repository: [Ecommerce Store Backend Setup](https://github.com/CP-Payne/go-ecommerce-store-api).\n        \n    - Follow the instructions to configure the database, install dependencies, and run the server.\n        \n2. **Register or Login:**\n    \n    - Once the backend is running, begin by calling the `/register` endpoint to create a new user, or `/login` if you already have an account.\n        \n    - Successful login or registration will provide a **JWT token**, which is required for most API operations.\n        \n3. **Send Requests:**\n    \n    - After logging in, ensure the JWT token is included in your request as a **cookie** named `jwt` to access authenticated endpoints.\n        \n4. **Response Formats:**\n    \n    - All API responses are returned in JSON format. Both successful requests and error responses are formatted as JSON objects.\n        \n\n## Authentication\n\nMost endpoints require authentication, which is handled via JWT (JSON Web Token).\n\n#### How Authentication Works:\n\n- After successful registration or login, a JWT token will be returned in the response.\n    \n- Include this token in a cookie with the name `jwt` for all authenticated requests.\n    \n- Failing to include the token or sending an invalid token will result in an `HTTP 401 Unauthorized` response.\n    \n\n#### Common Authentication Errors:\n\n- **401 Unauthorized**: This occurs when:\n    \n    - The JWT token is missing from the request.\n        \n    - The token is expired or has an invalid signature.\n        \n    - The token is malformed or otherwise invalid.\n        \n\n### Error Handling\n\nThe API uses standard HTTP response codes to indicate the success or failure of requests.\n\n- **200 OK**: The request was successful, and the response contains the requested data.\n    \n- **400 Bad Request**: There was a problem with the request, such as invalid input data. The response will contain an `error` key with details.\n    \n- **401 Unauthorized**: Authentication failed due to a missing or invalid JWT token.\n    \n- **404 Not Found**: The requested resource could not be found.\n    \n- **500 Internal Server Error**: Indicates an unexpected error on the server. This error usually means there is an issue with the backend. Please report these issues if they persist.\n    \n\n### Key Features of the API\n\n#### 1\\. **User Authentication**\n\n- **Register**: Create a new account.\n    \n- **Login**: Authenticate an existing user and receive a JWT token.\n    \n\n#### 2\\. **Product Listings**\n\n- **Get Products**: Retrieve a list of all products available for purchase.\n    \n- **Get Product by ID**: Retrieve details for a specific product by its ID.\n    \n\n#### 3\\. **Cart Operations**\n\n- **Add to Cart**: Add items to a user's shopping cart.\n    \n- **View Cart**: Retrieve the current state of the user's cart.\n    \n- **Remove from Cart**: Remove items from the cart.\n    \n\n#### 4\\. **Order Management**\n\n- **Get Orders**: Retrieve a list of a user's successfull orders.\n    \n\n#### 5\\. **Payments (PayPal Integration)**\n\n- **Create Order**: Place an order based on the items in the user's cart.\n    \n- **Capture Payment**: Complete the PayPal payment process and finalize the order.\n    \n\n#### 6\\. **Reviews**\n\n- **Add Review**: Submit a review for a product.\n    \n- **Get Reviews**: Retrieve reviews for a specific product.\n    \n\n### Example Usage Flow\n\n1. **User Registration/Login**:\n    \n    - Use the `/register` or `/login` endpoint to create a user or authenticate an existing one.\n        \n    - Store the returned JWT token in a cookie called `jwt`.\n        \n2. **Browse Products**:\n    \n    - Use the `/products` endpoint to retrieve the list of products available for purchase.\n        \n    - Call `/products/{id}` to get detailed information about a specific product.\n        \n3. **Manage Cart**:\n    \n    - Add items to the cart by calling `/cart/add` with the product ID and quantity.\n        \n    - View the cart contents using `/cart`.\n        \n4. **Place an Order**:\n    \n    - After adding products to the cart, call `/payment/create-order/cart` to generate an order for those products.\n        \n    - Initiate payment by following the `ApproveLink` in the previous step's reponse.\n        \n\n### JWT Token Example\n\nAfter a successful login or registration, the API will return a response containing the following header:\n\n```\nSet-Cookie: jwt=<your-jwt-token>\n\n ```\n\nMake sure this cookie is included in future requests:\n\n```\nCookie: jwt=<your-jwt-token>\n\n ```",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21095392",
+		"_collection_link": "https://dark-escape-59291.postman.co/workspace/EcomStore~27334b5a-ed78-441e-9fb4-b010aaa6924f/collection/21095392-d4851731-4061-4b6e-8fce-17ffc42b02db?action=share&source=collection_link&creator=21095392"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"<email>\",\r\n    \"name\": \"<user_name>\",\r\n    \"password\": \"<user_password>\",\r\n    \"confirmPassword\": \"<user_password>\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/register",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"register"
+							]
+						},
+						"description": "This endpoint registers a new user in the system by providing an email, name, password and password confirmation. The password and confirmation must match for successful registration. A JWT token is generated and set in an HttpOnly cookie for authentication purposes."
+					},
+					"response": [
+						{
+							"name": "Created - Registration Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"test@gmail.com\",\r\n    \"name\": \"test\",\r\n    \"password\": \"password1!\",\r\n    \"confirmPassword\": \"password1!\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/register",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"register"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Set-Cookie",
+									"value": "jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InQzQGdtYWlsLmNvbSIsImlkIjoiMmEwNmJiODAtMjY2Zi00OTE4LTkyNzgtYjQ4NGQ4ZGM1MmZkIn0.a12Uo4iQpeWJxd1M9IyR7YOl0fGX5WxtsbIQlR0a14E; Expires=Wed, 09 Oct 2024 14:18:26 GMT; HttpOnly; SameSite=Lax"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 02 Oct 2024 14:18:26 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "109"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"email\": \"test@gmail.com\",\n    \"message\": \"Registration successfull\",\n    \"userId\": \"<user_id>\"\n}"
+						},
+						{
+							"name": "Conflict - Email Exists",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"test@gmail.com\",\r\n    \"name\": \"test\",\r\n    \"password\": \"password1!\",\r\n    \"confirmPassword\": \"password1!\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/register",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"register"
+									]
+								}
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 02 Oct 2024 14:15:31 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "32"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Email already exists\"\n}"
+						},
+						{
+							"name": "Bad Request - Password Policy Not Met",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"test@gmail.com\",\r\n    \"name\": \"test\",\r\n    \"password\": \"invalid\",\r\n    \"confirmPassword\": \"invalid\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/register",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"register"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 02 Oct 2024 14:13:55 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "126"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"password\": \"password must be at least 8 characters long, contain at least one letter, one number, and one special character\"\n}"
+						},
+						{
+							"name": "Bad Request - Password Do Not Match",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"test@gmail.com\",\r\n    \"name\": \"test\",\r\n    \"password\": \"password1!\",\r\n    \"confirmPassword\": \"does not match\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/register",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"register"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 02 Oct 2024 14:16:47 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "34"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Passwords do not match\"\n}"
+						},
+						{
+							"name": "Bad Request - Invalid Email",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"testgmail.com\",\r\n    \"name\": \"test\",\r\n    \"password\": \"password1!\",\r\n    \"confirmPassword\": \"password1!\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/register",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"register"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 02 Oct 2024 14:17:53 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "34"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"email\": \"invalid email provided\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Login User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"<email>\",\r\n    \"password\": \"<password>\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/login",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"login"
+							]
+						},
+						"description": "This endpoint allows a registerd user to log in by providing their email and password. On successful login, a JWT token is generated and set in an HttpOnly cookie for session management."
+					},
+					"response": [
+						{
+							"name": "Login Sucessfull",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"test@gmail.com\",\r\n    \"password\": \"password!1\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/login",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"login"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Set-Cookie",
+									"value": "jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3QxQGdtYWlsLmNvbSIsImlkIjoiNDJhZWE3YTYtNzIwMC00ZGVlLWI4NTAtMDY2YmZjYWEzMjExIn0.O3pgXQmzFYqH2XmKFWBNUGZOJYy0kQXXPlZ1rX5Yhdc; Expires=Wed, 09 Oct 2024 11:37:35 GMT; HttpOnly; SameSite=Lax"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 02 Oct 2024 11:37:35 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "79"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Login successfull\",\n    \"userId\": \"<user_id>\"\n}"
+						},
+						{
+							"name": "Bad Request - Invalid Credentials",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"notexist@gmail.com\",\r\n    \"password\": \"or invalid password\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/login",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"login"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 02 Oct 2024 11:44:37 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "31"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Invalid credentials\"\n}"
+						}
+					]
+				}
+			],
+			"description": "The Authentication group handles user registration and login operations. These endpoints allow users to create accounts and authenticate themselves to access the system. The authentication uses JWT (JSON Web Tokens), which is sent via cookies for secure session management."
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Get User Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/user/profile",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"user",
+								"profile"
+							]
+						},
+						"description": "This endpoint retrieves the details of the authenticated user. The user must be authenticated via a valid JWT token, which should be included as a **cookie** named `jwt`."
+					},
+					"response": [
+						{
+							"name": "OK - User Details Received",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3000/user/profile",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"user",
+										"profile"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 02 Oct 2024 15:16:10 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "82"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"<user_id>\",\n    \"name\": \"<user_name>\",\n    \"email\": \"<user_email>\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get User Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/user/orders",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"user",
+								"orders"
+							]
+						},
+						"description": "This endpoint retrieves the list of orders placed by the authenticated user. The user must be authenticated via a valid JWT token, which should be included as a **cookie** named `jwt`."
+					},
+					"response": [
+						{
+							"name": "OK - Orders Retrieved",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3000/user/orders",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"user",
+										"orders"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 02 Oct 2024 15:31:32 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "759"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": \"8d1f8b99-1a93-470d-9999-e5ccb4d8868e\",\n        \"productTotal\": 39.99,\n        \"orderTotal\": 39.99,\n        \"userId\": \"2a06bb80-266f-4918-9278-b484d8dc52fd\",\n        \"items\": [\n            {\n                \"productId\": \"b7e162b8-38a9-4bb6-b61b-68b175f1e9f5\",\n                \"name\": \"Portable LED Desk Lamp\",\n                \"quantity\": 1,\n                \"price\": 39.99\n            }\n        ],\n        \"paymentMethod\": \"paypal\",\n        \"shippingPrice\": 0,\n        \"createdAt\": \"2024-10-02T17:29:19.891322Z\",\n        \"updatedAt\": \"2024-10-02T17:29:52.102268Z\"\n    },\n    {\n        \"id\": \"5d7c1f75-51a9-4df8-8cc3-3b71e629e1df\",\n        \"productTotal\": 89.97,\n        \"orderTotal\": 89.97,\n        \"userId\": \"2a06bb80-266f-4918-9278-b484d8dc52fd\",\n        \"items\": [\n            {\n                \"productId\": \"3e2762f7-344d-4e6c-acb8-8462c67438f8\",\n                \"name\": \"Wireless Mouse\",\n                \"quantity\": 3,\n                \"price\": 29.99\n            }\n        ],\n        \"paymentMethod\": \"paypal\",\n        \"shippingPrice\": 0,\n        \"createdAt\": \"2024-10-02T17:31:08.754225Z\",\n        \"updatedAt\": \"2024-10-02T17:31:18.345045Z\"\n    }\n]"
+						},
+						{
+							"name": "OK - No Orders Placed",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/user/orders",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"user",
+										"orders"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 02 Oct 2024 15:25:03 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "2"
+								}
+							],
+							"cookie": [],
+							"body": "[]"
+						}
+					]
+				}
+			],
+			"description": "This group contains endpoints related to user-specific operations, such as fetching user profile details and retrieving orders placed by the user. These endpoints require authentication via a JWT token provided as a cookie."
+		},
+		{
+			"name": "Product",
+			"item": [
+				{
+					"name": "Get Product Information",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/products/{{product_id}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"products",
+								"{{product_id}}"
+							]
+						},
+						"description": "This endpoint retrieves detailed information for a specific product based on its ID."
+					},
+					"response": [
+						{
+							"name": "OK - Product Information Received",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3000/products/3e2762f7-344d-4e6c-acb8-8462c67438f8",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"products",
+										"3e2762f7-344d-4e6c-acb8-8462c67438f8"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 06:33:04 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "646"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"3e2762f7-344d-4e6c-acb8-8462c67438f8\",\n    \"name\": \"Wireless Mouse\",\n    \"description\": \"Ergonomic wireless mouse with customizable buttons and DPI settings.\",\n    \"price\": 29.99,\n    \"brand\": \"Logitech\",\n    \"sku\": \"MOUSE-WL-LOGI\",\n    \"stock\": 141,\n    \"categoryId\": \"3e2762f7-344d-4e6c-acb8-8462c67438f8\",\n    \"imageUrl\": \"https://example.com/images/wireless-mouse.jpg\",\n    \"thumbnailUrl\": \"https://example.com/images/wireless-mouse-thumb.jpg\",\n    \"specifications\": {\n        \"dpi\": \"800-1600 DPI\",\n        \"color\": \"Black\",\n        \"battery_life\": \"12 months\",\n        \"connectivity\": \"2.4GHz wireless\"\n    },\n    \"variants\": [\n        {\n            \"sku\": \"MOUSE-WL-LOGI-BLK\",\n            \"color\": \"Black\",\n            \"price\": 29.99\n        },\n        {\n            \"sku\": \"MOUSE-WL-LOGI-WHT\",\n            \"color\": \"White\",\n            \"price\": 29.99\n        }\n    ]\n}"
+						},
+						{
+							"name": "Bad Request - Invalid Product ID",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/products/{{invalid product uuid}}",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"{{invalid product uuid}}"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 06:33:42 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "30"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Invalid product ID\"\n}"
+						},
+						{
+							"name": "Not Found - Product Not Found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/products/{{non-existing-productID}}",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"{{non-existing-productID}}"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 06:34:03 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "29"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Product not found\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get all products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/products",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"products"
+							]
+						},
+						"description": "This endpoint retrieves a list of all available products."
+					},
+					"response": [
+						{
+							"name": "OK - Retrieved List",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3000/products",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"products"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 06:36:24 GMT"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": \"749059f1-61df-4d24-934f-6179035b2149\",\n        \"name\": \"USB-C Hub\",\n        \"description\": \"7-in-1 USB-C hub with HDMI, USB 3.0, and SD card slots.\",\n        \"price\": 49.99,\n        \"brand\": \"Anker\",\n        \"sku\": \"USBHUB-7IN1-ANK\",\n        \"stock\": 100,\n        \"categoryId\": \"749059f1-61df-4d24-934f-6179035b2149\",\n        \"imageUrl\": \"https://example.com/images/usb-c-hub.jpg\",\n        \"thumbnailUrl\": \"https://example.com/images/usb-c-hub-thumb.jpg\",\n        \"specifications\": {\n            \"ports\": \"1 HDMI, 3 USB 3.0, 1 SD card slot, 1 microSD card slot, 1 USB-C power delivery\",\n            \"weight\": \"50g\",\n            \"material\": \"Aluminum\"\n        },\n        \"variants\": [\n            {\n                \"sku\": \"USBHUB-7IN1-ANK-GRY\",\n                \"color\": \"Space Gray\",\n                \"price\": 49.99\n            },\n            {\n                \"sku\": \"USBHUB-7IN1-ANK-SLV\",\n                \"color\": \"Silver\",\n                \"price\": 49.99\n            }\n        ]\n    },\n    {\n        \"id\": \"5b7922cd-0b27-4541-90ee-7c6230b4d90c\",\n        \"name\": \"Smart LED Bulb\",\n        \"description\": \"Wi-Fi enabled smart LED bulb with adjustable brightness and color.\",\n        \"price\": 19.99,\n        \"brand\": \"Philips Hue\",\n        \"sku\": \"LED-BULB-SMART-HUE\",\n        \"stock\": 200,\n        \"categoryId\": \"5b7922cd-0b27-4541-90ee-7c6230b4d90c\",\n        \"imageUrl\": \"https://example.com/images/smart-led-bulb.jpg\",\n        \"thumbnailUrl\": \"https://example.com/images/smart-led-bulb-thumb.jpg\",\n        \"specifications\": {\n            \"lifespan\": \"25000 hours\",\n            \"brightness\": \"800 lumens\",\n            \"connectivity\": \"Wi-Fi, Bluetooth\",\n            \"color_temperature\": \"2700K-6500K\"\n        },\n        \"variants\": [\n            {\n                \"sku\": \"LED-BULB-SMART-HUE-WHT\",\n                \"color\": \"White\",\n                \"price\": 19.99\n            },\n            {\n                \"sku\": \"LED-BULB-SMART-HUE-CLR\",\n                \"color\": \"Color\",\n                \"price\": 24.99\n            }\n        ]\n    },\n    {\n        \"id\": \"83b35792-bd21-4d29-bb42-0ecdf9125fb1\",\n        \"name\": \"Smartwatch X100\",\n        \"description\": \"Feature-packed smartwatch with heart rate monitor, GPS, and more.\",\n        \"price\": 149.99,\n        \"brand\": \"FitGear\",\n        \"sku\": \"WATCH-SMART-X100\",\n        \"stock\": 50,\n        \"categoryId\": \"83b35792-bd21-4d29-bb42-0ecdf9125fb1\",\n        \"imageUrl\": \"https://example.com/images/smartwatch-x100.jpg\",\n        \"thumbnailUrl\": \"https://example.com/images/smartwatch-x100-thumb.jpg\",\n        \"specifications\": {\n            \"display\": \"1.5 inch AMOLED\",\n            \"battery_life\": \"7 days\",\n            \"connectivity\": \"Bluetooth, GPS\",\n            \"water_resistance\": \"5 ATM\"\n        },\n        \"variants\": [\n            {\n                \"sku\": \"WATCH-SMART-X100-BLK-SIL\",\n                \"band\": \"Silicone\",\n                \"color\": \"Black\",\n                \"price\": 149.99\n            },\n            {\n                \"sku\": \"WATCH-SMART-X100-SLV-MTL\",\n                \"band\": \"Metal\",\n                \"color\": \"Silver\",\n                \"price\": 169.99\n            }\n        ]\n    },\n    {\n        \"id\": \"99734a47-a88e-48e3-9e89-c55bd515c9e2\",\n        \"name\": \"Fitness Tracker Z200\",\n        \"description\": \"Sleek fitness tracker with sleep monitoring and step counter.\",\n        \"price\": 69.99,\n        \"brand\": \"HealthPlus\",\n        \"sku\": \"FITNESS-TRACK-Z200\",\n        \"stock\": 80,\n        \"categoryId\": \"99734a47-a88e-48e3-9e89-c55bd515c9e2\",\n        \"imageUrl\": \"https://example.com/images/fitness-tracker-z200.jpg\",\n        \"thumbnailUrl\": \"https://example.com/images/fitness-tracker-z200-thumb.jpg\",\n        \"specifications\": {\n            \"display\": \"OLED\",\n            \"battery_life\": \"10 days\",\n            \"connectivity\": \"Bluetooth\",\n            \"water_resistance\": \"IP68\"\n        },\n        \"variants\": [\n            {\n                \"sku\": \"FITNESS-TRACK-Z200-BLK\",\n                \"band\": \"Silicone\",\n                \"color\": \"Black\",\n                \"price\": 69.99\n            },\n            {\n                \"sku\": \"FITNESS-TRACK-Z200-BLU\",\n                \"band\": \"Silicone\",\n                \"color\": \"Blue\",\n                \"price\": 69.99\n            }\n        ]\n    },\n    {\n        \"id\": \"3e2762f7-344d-4e6c-acb8-8462c67438f8\",\n        \"name\": \"Wireless Mouse\",\n        \"description\": \"Ergonomic wireless mouse with customizable buttons and DPI settings.\",\n        \"price\": 29.99,\n        \"brand\": \"Logitech\",\n        \"sku\": \"MOUSE-WL-LOGI\",\n        \"stock\": 141,\n        \"categoryId\": \"3e2762f7-344d-4e6c-acb8-8462c67438f8\",\n        \"imageUrl\": \"https://example.com/images/wireless-mouse.jpg\",\n        \"thumbnailUrl\": \"https://example.com/images/wireless-mouse-thumb.jpg\",\n        \"specifications\": {\n            \"dpi\": \"800-1600 DPI\",\n            \"color\": \"Black\",\n            \"battery_life\": \"12 months\",\n            \"connectivity\": \"2.4GHz wireless\"\n        },\n        \"variants\": [\n            {\n                \"sku\": \"MOUSE-WL-LOGI-BLK\",\n                \"color\": \"Black\",\n                \"price\": 29.99\n            },\n            {\n                \"sku\": \"MOUSE-WL-LOGI-WHT\",\n                \"color\": \"White\",\n                \"price\": 29.99\n            }\n        ]\n    },\n    {\n        \"id\": \"b7e162b8-38a9-4bb6-b61b-68b175f1e9f5\",\n        \"name\": \"Portable LED Desk Lamp\",\n        \"description\": \"Rechargeable LED desk lamp with touch control and adjustable arm.\",\n        \"price\": 39.99,\n        \"brand\": \"TaoTronics\",\n        \"sku\": \"DESK-LAMP-LED-TT\",\n        \"stock\": 55,\n        \"categoryId\": \"b7e162b8-38a9-4bb6-b61b-68b175f1e9f5\",\n        \"imageUrl\": \"https://example.com/images/led-desk-lamp.jpg\",\n        \"thumbnailUrl\": \"https://example.com/images/led-desk-lamp-thumb.jpg\",\n        \"specifications\": {\n            \"weight\": \"600g\",\n            \"color_modes\": \"3\",\n            \"battery_life\": \"10 hours\",\n            \"brightness_levels\": \"5\"\n        },\n        \"variants\": [\n            {\n                \"sku\": \"DESK-LAMP-LED-TT-BLK\",\n                \"color\": \"Black\",\n                \"price\": 39.99\n            },\n            {\n                \"sku\": \"DESK-LAMP-LED-TT-WHT\",\n                \"color\": \"White\",\n                \"price\": 39.99\n            }\n        ]\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Product Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/products/categories",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"products",
+								"categories"
+							]
+						},
+						"description": "This endpoint retrieves a list of all available product categories."
+					},
+					"response": [
+						{
+							"name": "OK - Categories Received",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3000/products/categories",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"products",
+										"categories"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 06:39:34 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "615"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": \"9b682f9c-c1ac-4242-98ea-f05d5b2d680c\",\n        \"name\": \"Laptops\",\n        \"description\": \"Various models of laptops and notebooks\"\n    },\n    {\n        \"id\": \"8bc5a2ca-b3ed-4fad-91b5-aaf302e070bf\",\n        \"name\": \"Smartphones\",\n        \"description\": \"Latest smartphones from top brands\"\n    },\n    {\n        \"id\": \"87785cc5-4c62-441f-8fb5-add44b598c8c\",\n        \"name\": \"Tech Accessories\",\n        \"description\": \"Accessories for your tech devices\"\n    },\n    {\n        \"id\": \"2411d196-8e64-4161-894c-2ee25fab063f\",\n        \"name\": \"Light Gadgets\",\n        \"description\": \"Innovative lighting gadgets for home and office\"\n    },\n    {\n        \"id\": \"d1d7b533-39b5-466c-8ac4-3a3bacb4e763\",\n        \"name\": \"Wearables\",\n        \"description\": \"Smartwatches, fitness trackers, and more\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Product By Category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/products/categories/{{category_id}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"products",
+								"categories",
+								"{{category_id}}"
+							]
+						},
+						"description": "This endpoint retrieves a list of products for a specific category based on the category ID."
+					},
+					"response": [
+						{
+							"name": "OK - Products Received",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3000/products/categories/87785cc5-4c62-441f-8fb5-add44b598c8c",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"products",
+										"categories",
+										"87785cc5-4c62-441f-8fb5-add44b598c8c"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 06:41:50 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1305"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": \"749059f1-61df-4d24-934f-6179035b2149\",\n        \"name\": \"USB-C Hub\",\n        \"description\": \"7-in-1 USB-C hub with HDMI, USB 3.0, and SD card slots.\",\n        \"price\": 49.99,\n        \"brand\": \"Anker\",\n        \"sku\": \"USBHUB-7IN1-ANK\",\n        \"stock\": 100,\n        \"categoryId\": \"749059f1-61df-4d24-934f-6179035b2149\",\n        \"imageUrl\": \"https://example.com/images/usb-c-hub.jpg\",\n        \"thumbnailUrl\": \"https://example.com/images/usb-c-hub-thumb.jpg\",\n        \"specifications\": {\n            \"ports\": \"1 HDMI, 3 USB 3.0, 1 SD card slot, 1 microSD card slot, 1 USB-C power delivery\",\n            \"weight\": \"50g\",\n            \"material\": \"Aluminum\"\n        },\n        \"variants\": [\n            {\n                \"sku\": \"USBHUB-7IN1-ANK-GRY\",\n                \"color\": \"Space Gray\",\n                \"price\": 49.99\n            },\n            {\n                \"sku\": \"USBHUB-7IN1-ANK-SLV\",\n                \"color\": \"Silver\",\n                \"price\": 49.99\n            }\n        ]\n    },\n    {\n        \"id\": \"3e2762f7-344d-4e6c-acb8-8462c67438f8\",\n        \"name\": \"Wireless Mouse\",\n        \"description\": \"Ergonomic wireless mouse with customizable buttons and DPI settings.\",\n        \"price\": 29.99,\n        \"brand\": \"Logitech\",\n        \"sku\": \"MOUSE-WL-LOGI\",\n        \"stock\": 141,\n        \"categoryId\": \"3e2762f7-344d-4e6c-acb8-8462c67438f8\",\n        \"imageUrl\": \"https://example.com/images/wireless-mouse.jpg\",\n        \"thumbnailUrl\": \"https://example.com/images/wireless-mouse-thumb.jpg\",\n        \"specifications\": {\n            \"dpi\": \"800-1600 DPI\",\n            \"color\": \"Black\",\n            \"battery_life\": \"12 months\",\n            \"connectivity\": \"2.4GHz wireless\"\n        },\n        \"variants\": [\n            {\n                \"sku\": \"MOUSE-WL-LOGI-BLK\",\n                \"color\": \"Black\",\n                \"price\": 29.99\n            },\n            {\n                \"sku\": \"MOUSE-WL-LOGI-WHT\",\n                \"color\": \"White\",\n                \"price\": 29.99\n            }\n        ]\n    }\n]"
+						},
+						{
+							"name": "OK - No Products In Category",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/products/categories/{{category_id}}",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"categories",
+										"{{category_id}}"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 06:46:28 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "2"
+								}
+							],
+							"cookie": [],
+							"body": "[]"
+						},
+						{
+							"name": "Bad Request - Invalid Category ID",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/products/categories/{{invalid-category-uuid}}",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"categories",
+										"{{invalid-category-uuid}}"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 06:42:59 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "31"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Invalid category ID\"\n}"
+						}
+					]
+				}
+			],
+			"description": "This group handles oeprations related to product retrieval, such as fetching individual product details, listing of all products, retrieving product categories, and filtering products by category. These endpoints do not require authentication."
+		},
+		{
+			"name": "Reviews",
+			"item": [
+				{
+					"name": "Add Review",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Great Product\",\n    \"reviewText\": \"I love this product\",\n    \"rating\": 5,\n    \"anonymous\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/products/{{product_id}}/reviews",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"products",
+								"{{product_id}}",
+								"reviews"
+							]
+						},
+						"description": "Allow an authenticated user to add a review for a specific product."
+					},
+					"response": [
+						{
+							"name": "Created - Review Added",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"title\": \"Great Product\",\n    \"reviewText\": \"I love this product\",\n    \"rating\": 5,\n    \"anonymous\": true\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/products/3e2762f7-344d-4e6c-acb8-8462c67438f8/reviews",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"products",
+										"3e2762f7-344d-4e6c-acb8-8462c67438f8",
+										"reviews"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 07:43:08 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "39"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Review added successfully\"\n}"
+						},
+						{
+							"name": "Conflict - Already Reviewed Product",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"title\": \"Great Product\",\n    \"reviewText\": \"I love this product\",\n    \"rating\": 5,\n    \"anonymous\": true\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/products/3e2762f7-344d-4e6c-acb8-8462c67438f8/reviews",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"3e2762f7-344d-4e6c-acb8-8462c67438f8",
+										"reviews"
+									]
+								}
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 07:41:39 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "49"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"User has already reviewed the product\"\n}"
+						},
+						{
+							"name": "Bad Request - Invalid Product ID",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"title\": \"Great Product\",\n    \"reviewText\": \"I love this product\",\n    \"rating\": 5,\n    \"anonymous\": true\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/products/{{invalid-product-uuid}}/reviews",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"{{invalid-product-uuid}}",
+										"reviews"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 07:45:51 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "30"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Invalid product ID\"\n}"
+						},
+						{
+							"name": "Bad Request - Invalid body",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"title\": \"Great Product\",\n    \"reviewText\": \"I love this product\",\n    \"rating\": 5,\n    \"anonymous\": true,invalid-body\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/products/3e2762f7-344d-4e6c-acb8-8462c67438f8/reviews",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"3e2762f7-344d-4e6c-acb8-8462c67438f8",
+										"reviews"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 07:51:36 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "32"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Invalid request body\"\n}"
+						},
+						{
+							"name": "Bad Request - Invalid Rating",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"title\": \"Great Product \",\n    \"reviewText\": \"I love this product\",\n    \"rating\": 6,\n    \"anonymous\": true\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/products/3e2762f7-344d-4e6c-acb8-8462c67438f8/reviews",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"3e2762f7-344d-4e6c-acb8-8462c67438f8",
+										"reviews"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 07:52:35 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "42"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"rating must be between 1 and 5\"\n}"
+						},
+						{
+							"name": "Not Found - Product Not Found",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"title\": \"Great Product\",\n    \"reviewText\": \"I love this product\",\n    \"rating\": 5,\n    \"anonymous\": true\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/products/{{non-existing-product-id}}/reviews",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"{{non-existing-product-id}}",
+										"reviews"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 07:47:04 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "29"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Product not found\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update review",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Great Product Updated by user\",\n    \"reviewText\": \"I love this product\",\n    \"rating\": 3,\n    \"anonymous\":true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/products/{{product_id}}/reviews",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"products",
+								"{{product_id}}",
+								"reviews"
+							]
+						},
+						"description": "Allows an authenticated user to update their review for a specific product."
+					},
+					"response": [
+						{
+							"name": "OK - Review Updated",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"title\": \"Great Product Updated by user\",\n    \"reviewText\": \"I love this product\",\n    \"rating\": 3,\n    \"anonymous\":true\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/products/3e2762f7-344d-4e6c-acb8-8462c67438f8/reviews",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"products",
+										"3e2762f7-344d-4e6c-acb8-8462c67438f8",
+										"reviews"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 07:55:59 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "244"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Review updated successfully\",\n    \"review\": {\n        \"title\": \"Great Product Updated by user\",\n        \"reviewText\": \"I love this product\",\n        \"rating\": 3,\n        \"userName\": \"anonymous\",\n        \"createdAt\": \"2024-10-03T09:53:43.02135Z\",\n        \"updatedAt\": \"2024-10-03T09:55:59.347912Z\"\n    }\n}"
+						},
+						{
+							"name": "Not Found - No Review To Update",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"title\": \"Great Product Updated by user\",\n    \"reviewText\": \"I love this product\",\n    \"rating\": 3,\n    \"anonymous\":true\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/products/3e2762f7-344d-4e6c-acb8-8462c67438f8/reviews",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"3e2762f7-344d-4e6c-acb8-8462c67438f8",
+										"reviews"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 07:56:22 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "45"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"User has not reviewed the product\"\n}"
+						},
+						{
+							"name": "Not Found - Product Not Found",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"title\": \"Great Product Updated by user\",\n    \"reviewText\": \"I love this product\",\n    \"rating\": 3,\n    \"anonymous\":true\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/products/{{non-existing-product-id}}/reviews",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"{{non-existing-product-id}}",
+										"reviews"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 07:59:36 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "29"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Product not found\"\n}"
+						},
+						{
+							"name": "Bad Request - Validation Error",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"title\": \"Great Product Updated by user\",\n    \"reviewText\": \"I love this product\",\n    \"rating\": 6,\n    \"anonymous\":true\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/products/3e2762f7-344d-4e6c-acb8-8462c67438f8/reviews",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"3e2762f7-344d-4e6c-acb8-8462c67438f8",
+										"reviews"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 08:01:11 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "42"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"rating must be between 1 and 5\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Product Reviews",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/products/{{product_id}}/reviews",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"products",
+								"{{product_id}}",
+								"reviews"
+							]
+						},
+						"description": "Fetches all reviews for a specific product. _**No authentication required**_"
+					},
+					"response": [
+						{
+							"name": "OK - Product Review List",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3000/products/3e2762f7-344d-4e6c-acb8-8462c67438f8/reviews",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"products",
+										"3e2762f7-344d-4e6c-acb8-8462c67438f8",
+										"reviews"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 08:01:59 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "577"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"title\": \"Great Product Added Review\",\n        \"reviewText\": \"I love this product\",\n        \"rating\": 5,\n        \"userName\": \"anonymous\",\n        \"createdAt\": \"2024-09-26T10:04:28.596301Z\",\n        \"updatedAt\": \"2024-09-26T10:04:28.596301Z\"\n    },\n    {\n        \"title\": \"Great Product Added Review\",\n        \"reviewText\": \"I love this product\",\n        \"rating\": 5,\n        \"userName\": \"anonymous\",\n        \"createdAt\": \"2024-10-01T12:58:08.413403Z\",\n        \"updatedAt\": \"2024-10-01T12:58:08.413403Z\"\n    },\n    {\n        \"title\": \"Great Product Added Review\",\n        \"reviewText\": \"I love this product\",\n        \"rating\": 5,\n        \"userName\": \"anonymous\",\n        \"createdAt\": \"2024-10-03T09:56:47.187894Z\",\n        \"updatedAt\": \"2024-10-03T09:56:47.187894Z\"\n    }\n]"
+						},
+						{
+							"name": "Not Found - Product Not Found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/products/{{non-existing-product-id}}/reviews",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"{{non-existing-product-id}}",
+										"reviews"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 08:02:36 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "29"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Product not found\"\n}"
+						},
+						{
+							"name": "Bad Request - Invalid Product ID",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/products/{{invalid-product-uuid}}/reviews",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"{{invalid-product-uuid}}",
+										"reviews"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 08:03:37 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "30"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Invalid product ID\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get user's product review",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/products/{{product_id}}/reviews/user",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"products",
+								"{{product_id}}",
+								"reviews",
+								"user"
+							]
+						},
+						"description": "Fetches the review of the authenticated user for a specific product."
+					},
+					"response": [
+						{
+							"name": "OK - User Review",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3000/products/3e2762f7-344d-4e6c-acb8-8462c67438f8/reviews/user",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"products",
+										"3e2762f7-344d-4e6c-acb8-8462c67438f8",
+										"reviews",
+										"user"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 08:08:09 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "191"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"title\": \"Great Product Added Review\",\n    \"reviewText\": \"I love this product\",\n    \"rating\": 5,\n    \"userName\": \"anonymous\",\n    \"createdAt\": \"2024-10-03T09:56:47.187894Z\",\n    \"updatedAt\": \"2024-10-03T09:56:47.187894Z\"\n}"
+						},
+						{
+							"name": "Not Found - No User Review",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/products/3e2762f7-344d-4e6c-acb8-8462c67438f8/reviews/user",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"3e2762f7-344d-4e6c-acb8-8462c67438f8",
+										"reviews",
+										"user"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 08:09:01 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "33"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"User review not found\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Delete review",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/products/{{product_id}}/reviews",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"products",
+								"{{product_id}}",
+								"reviews"
+							]
+						},
+						"description": "Allows an authenticated user to delete their review for a specific product."
+					},
+					"response": [
+						{
+							"name": "OK - Review Deleted",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3000/products/3e2762f7-344d-4e6c-acb8-8462c67438f8/reviews",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"products",
+										"3e2762f7-344d-4e6c-acb8-8462c67438f8",
+										"reviews"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 08:11:57 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "41"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Review deleted successfully\"\n}"
+						},
+						{
+							"name": "Bad Request - Invalid Product ID",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/products/{{invalid-product-uuid}}/reviews",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"{{invalid-product-uuid}}",
+										"reviews"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 08:12:48 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "30"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Invalid product ID\"\n}"
+						},
+						{
+							"name": "Not Found - Product Not Found",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/products/{{non-existing-product-id}}/reviews",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"products",
+										"{{non-existing-product-id}}",
+										"reviews"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 08:13:05 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "29"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Product not found\"\n}"
+						}
+					]
+				}
+			],
+			"description": "This group contains endpoints related to product review operations, such as adding, viewing, modifying and deleting reviews. Most review-related operations require authentication via JWT tokens. Each endpoint expects a valid `productID` and require the user's authentication via a JWT token provided as a cookie. If no authentication token, or an invalid authentication token is provided, the server will respond with `401 Unauthroized.`"
+		},
+		{
+			"name": "Cart",
+			"item": [
+				{
+					"name": "Get cart",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/cart",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"cart"
+							]
+						},
+						"description": "Fetches the cart of an authenticated user. If there are no internal server errors, this endpoint will always return a cart."
+					},
+					"response": [
+						{
+							"name": "OK - Get Cart Empty",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3000/cart",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"cart"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 09:51:45 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "192"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"c025dfa7-0270-4dd3-8a38-02db28c6736f\",\n    \"userId\": \"2a06bb80-266f-4918-9278-b484d8dc52fd\",\n    \"items\": [],\n    \"status\": \"active\",\n    \"createdAt\": \"0001-01-01T00:00:00Z\",\n    \"updatedAt\": \"0001-01-01T00:00:00Z\"\n}"
+						},
+						{
+							"name": "OK - Get Cart With Items",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/cart",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"cart"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 09:59:08 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "310"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"c025dfa7-0270-4dd3-8a38-02db28c6736f\",\n    \"userId\": \"2a06bb80-266f-4918-9278-b484d8dc52fd\",\n    \"items\": [\n        {\n            \"productId\": \"b7e162b8-38a9-4bb6-b61b-68b175f1e9f5\",\n            \"quantity\": 1,\n            \"productName\": \"Portable LED Desk Lamp\",\n            \"price\": 39.99\n        }\n    ],\n    \"status\": \"active\",\n    \"createdAt\": \"0001-01-01T00:00:00Z\",\n    \"updatedAt\": \"0001-01-01T00:00:00Z\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Add item to cart",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"productId\": \"<product_id>\",\r\n    \"quantity\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/cart/add",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"cart",
+								"add"
+							]
+						},
+						"description": "Allows and authenticated user to add a product to their cart.\n\nNote that if this request is executed with the same `productId` multiple times, additional product instances will not be added to the cart, instead, the quantity of the item in the cart will increase."
+					},
+					"response": [
+						{
+							"name": "OK - Add Item To Cart",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"productId\": \"b7e162b8-38a9-4bb6-b61b-68b175f1e9f5\",\r\n    \"quantity\": 1\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/cart/add",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"cart",
+										"add"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 09:58:39 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "44"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Succesfully added item to cart\"\n}"
+						},
+						{
+							"name": "Bad Request - Invalid Product ID",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"productId\": \"<invalid-product-uuid>\",\r\n    \"quantity\": 1\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/cart/add",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"cart",
+										"add"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 10:01:57 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "32"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Invalid request body\"\n}"
+						},
+						{
+							"name": "Bad Request - Invalid Quantity",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"productId\": \"b7e162b8-38a9-4bb6-b61b-68b175f1e9f5\",\r\n    \"quantity\": 0\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/cart/add",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"cart",
+										"add"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 10:10:06 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "43"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Quantity must be greater than 0\"\n}"
+						},
+						{
+							"name": "Not Found - Product Does Not Exist",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"productId\": \"<non-existing-product-id>\",\r\n    \"quantity\": 1\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/cart/add",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"cart",
+										"add"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 10:08:00 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "29"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Product not found\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Remove Item From Cart",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"productId\": \"<product_id>\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/cart/remove",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"cart",
+								"remove"
+							]
+						},
+						"description": "Allows an authenticated user to remove an item from their cart."
+					},
+					"response": [
+						{
+							"name": "OK - Item Removed",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"productId\": \"b7e162b8-38a9-4bb6-b61b-68b175f1e9f5\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/cart/remove",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"cart",
+										"remove"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 10:12:22 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "38"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Item removed succesfully\"\n}"
+						},
+						{
+							"name": "Bad Request - Invalid Product ID",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"productId\": \"<invalid-product-uuid>\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/cart/remove",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"cart",
+										"remove"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 10:12:48 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "32"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Invalid request body\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Reduce Cart Product Quantity",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"productId\": \"<product_id>\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/cart/reduce",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"cart",
+								"reduce"
+							]
+						},
+						"description": "Allows an authenticated user to reduce the quantity of an item in their cart by 1. If an item quantity reaches 0, it will automatically be removed from the cart."
+					},
+					"response": [
+						{
+							"name": "OK - Item Quantity Reduced",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"productId\": \"b7e162b8-38a9-4bb6-b61b-68b175f1e9f5\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/cart/reduce",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"cart",
+										"reduce"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 10:17:18 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "52"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Succesfully reduced cart item quantity\"\n}"
+						},
+						{
+							"name": "Bad Request - Invalid Request Body",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"productId\": \"<invalid-product-uuid>\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/cart/reduce",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"cart",
+										"reduce"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 12:03:37 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "32"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Invalid request body\"\n}"
+						}
+					]
+				}
+			],
+			"description": "This group contains endpoints related to user cart operations, such as retrieving, adding and removing cart items. All cart operations requires a user's authentication via a JWT token provided as a cookie. If no authentication token, or an invalid authentication token is provided, the server will respond with `401 Unauthroized.`"
+		},
+		{
+			"name": "Payments",
+			"item": [
+				{
+					"name": "Create Product Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"productId\": \"<product_id>\",\r\n    \"quantity\": 2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/payment/create-order/product",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"payment",
+								"create-order",
+								"product"
+							]
+						},
+						"description": "Creates an order based on a single product and the desired quantity specified by the user. The product ID and quantity are passed in the request body. If the product is availble and there are enough stock, an order is created and an `ApproveLink` is returned to which the user must be redirected to in order to complete the payment process."
+					},
+					"response": [
+						{
+							"name": "OK - Order Created",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"productId\": \"3e2762f7-344d-4e6c-acb8-8462c67438f8\",\r\n    \"quantity\": 2\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/payment/create-order/product",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"payment",
+										"create-order",
+										"product"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 13:05:34 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "152"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"ID\": \"<token>\",\n    \"ApproveLink\": \"https://www.sandbox.paypal.com/checkoutnow?token=<token>\",\n    \"Status\": \"\",\n    \"PaymentEmail\": \"\",\n    \"PayerID\": \"\"\n}"
+						},
+						{
+							"name": "Not Found - Product Not Found",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"productId\": \"<non-existing-product-id>\",\r\n    \"quantity\": 2\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/payment/create-order/product",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"payment",
+										"create-order",
+										"product"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 13:07:30 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "29"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Product not found\"\n}"
+						},
+						{
+							"name": "Bad Request - Invalid Product ID",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"productId\": \"<invalid-product-uuid>\",\r\n    \"quantity\": 2\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/payment/create-order/product",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"payment",
+										"create-order",
+										"product"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 13:07:04 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "30"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Invalid product ID\"\n}"
+						},
+						{
+							"name": "Bad Request - Insufficient Stock",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"productId\": \"3e2762f7-344d-4e6c-acb8-8462c67438f8\",\r\n    \"quantity\": 1000\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/payment/create-order/product",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"payment",
+										"create-order",
+										"product"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 13:08:26 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "28"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Not enough stock\"\n}"
+						},
+						{
+							"name": "Bad Request - Invalid Quantity",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"productId\": \"3e2762f7-344d-4e6c-acb8-8462c67438f8\",\r\n    \"quantity\": 0\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/payment/create-order/product",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"payment",
+										"create-order",
+										"product"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 13:09:58 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "42"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Quantity cannot be less than 1\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Create Cart Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/payment/create-order/cart",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"payment",
+								"create-order",
+								"cart"
+							]
+						},
+						"description": "Creates an order based on the items currently in the authenticated user's cart. The cart is validated to ensure it contains items and that there are enough stock, after which an order is created. On successfull order creation, an`ApproveLink` is returned to which the user must be redirected to in order to complete the payment process."
+					},
+					"response": [
+						{
+							"name": "OK - Order Created",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/payment/create-order/cart",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"payment",
+										"create-order",
+										"cart"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 13:10:55 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "152"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"ID\": \"<order-token>\",\n    \"ApproveLink\": \"https://www.sandbox.paypal.com/checkoutnow?token=<order-token>\",\n    \"Status\": \"\",\n    \"PaymentEmail\": \"\",\n    \"PayerID\": \"\"\n}"
+						},
+						{
+							"name": "Bad Request - Empty Cart",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/payment/create-order/cart",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"payment",
+										"create-order",
+										"cart"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 13:11:41 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "25"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"cart is empty\"\n}"
+						},
+						{
+							"name": "Bad Request - Insufficient Stock",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/payment/create-order/cart",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"payment",
+										"create-order",
+										"cart"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 13:12:12 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "28"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Not enough stock\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Capture Payment",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/payment/capture-order?token=<order-token>",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"payment",
+								"capture-order"
+							],
+							"query": [
+								{
+									"key": "token",
+									"value": "<order-token>"
+								}
+							]
+						},
+						"description": "Finalizes an order by capturing payment using the provided token from the payment processor. The token is passed as a query parameter to complete the transaction.\n\nNote that certain payment processors, such as paypal, will automatically call this endpoint after a successfull payment capture."
+					},
+					"response": [
+						{
+							"name": "OK - Purchase Successfull",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/payment/capture-order?token=<order-token>",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"payment",
+										"capture-order"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "<order-token>"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Access-Control-Allow-Headers",
+									"value": "Content-Type, Authorization"
+								},
+								{
+									"key": "Access-Control-Allow-Methods",
+									"value": "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:5173"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 Oct 2024 13:17:12 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "33"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Purchase succesfull\"\n}"
+						}
+					]
+				}
+			],
+			"description": "This group contains endpoints responsible for processing payments in the e-commerce system. It includes operations to create orders based on a user's cart or specific products, as well as capturing the payment upon completion of the order. The order creation operations requires JWT token provided as a cookie. If no authentication token, or an invalid authentication token is provided, the server will respond with `401 Unauthroized.`\n\nBoth order creation endpoints will return an \"ApproveLink\", I user should be redirected to this link in order to complete the payment processesors step for a successfull payment. Once the paypment was successfull, the payment processor would automatically redirect the user and call the `Capture Payment` endpoint."
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
