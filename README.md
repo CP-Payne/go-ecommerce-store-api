@@ -63,7 +63,7 @@ docker-compose up -d
 Once your database is up, you'll need to create the necessary database schema. This can be done manually or via migration tools like `goose`. To automate the migration process using `goose`, run:
 ```bash
 cd ./sql/schema
-goose postgres "protocol://username:password@host:port/database" up
+goose postgres "postgres://username:password@host:port/database" up
 ```
 Alternatively, you can run the SQL files located in `/sql/schema/` manually.
 #### Populating Test Data
