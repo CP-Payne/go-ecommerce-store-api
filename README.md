@@ -76,7 +76,7 @@ To populate the database with test data, particularly product data, run the SQL 
 
 After completing the setup, you can start the API server by running the following command from the root of the project:
 ```bash
-go run ./cmd/api/main.go
+go run cmd/api/main.go
 ```
 
 The API server will run on the port specified in the `.env` file (default is `3000`). You can access it via `http://localhost:<port>`.
