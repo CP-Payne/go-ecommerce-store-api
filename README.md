@@ -46,8 +46,6 @@ JWT_SECRET=<jwt_secret>
 # PAYPAL API CREDS
 PAYPAL_CLIENT=<paypal_client_id>
 PAYPAL_SECRET=<paypal_secret>
-PAYPAL_RETURN_URL="http://localhost:3000/complete-order"
-PAYPAL_CANCEL_URL="http://localhost:3000/cancel-order"
 ```
 - **POSTGRES variables**: Replace these with your PostgreSQL database credentials. If you don't have a PostgreSQL setup, you can use Docker (see the "Database Setup" section below).
 - **JWT_SECRET**: A secret key used for signing JSON Web Tokens (JWT).
