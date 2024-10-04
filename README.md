@@ -5,7 +5,7 @@ The **Ecommerce Store API** provides a set of functionalities required for manag
 ## API Postman Documentation
 Detailed API documentation can be found on Postman, providing comprehensive details about each endpoint:
 - **Postman Documentation:** [Ecommerce Store Documentation](https://documenter.getpostman.com/view/21095392/2sAXxLDEks)
-- **Postman Collection:** [Postman collection](./postman/API Postman Collection.json)
+- **Postman Collection:** [Postman collection](./postman/API%20Postman%20Collection.json)
 ## Installation
 Follow these steps to set up the Ecommerce Store API locally:
 ### Prerequisites
