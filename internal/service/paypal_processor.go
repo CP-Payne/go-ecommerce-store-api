@@ -40,6 +40,8 @@ func NewPayPalProcessor(pconf *config.ProcessorConfig) (*PayPalProcessor, error)
 		return nil, fmt.Errorf("failed to create paypal client: %w", err)
 	}
 	// client.SetLog(os.Stdout)
+	paymentSource.Paypal.ExperienceContext.ReturnURL = fmt.Sprintf("http://localhost:%s/payment/capture-order", pconf.Port)
+	paymentSource.Paypal.ExperienceContext.CancelURL = fmt.Sprintf("http://localhost:%s/payment/cancel-order", pconf.Port)
 
 	return &PayPalProcessor{
 		logger:          logger,

@@ -22,8 +22,7 @@ type Config struct {
 type ProcessorConfig struct {
 	ClientID     string
 	ClientSecret string
-	ReturnUrl    string
-	CancelUrl    string
+	Port         string
 }
 
 func New() *Config {
@@ -51,8 +50,6 @@ func New() *Config {
 
 	ppClientID := os.Getenv("PAYPAL_CLIENT")
 	ppClientSecret := os.Getenv("PAYPAL_SECRET")
-	paypalReturnUrl := os.Getenv("PAYPAL_RETURN_URL")
-	paypalCancelUrl := os.Getenv("PAYPAL_CANCEL_URL")
 
 	return &Config{
 		Port:   port,
@@ -62,8 +59,7 @@ func New() *Config {
 		PaymentProcessor: &ProcessorConfig{
 			ClientID:     ppClientID,
 			ClientSecret: ppClientSecret,
-			ReturnUrl:    paypalReturnUrl,
-			CancelUrl:    paypalCancelUrl,
+			Port:         port,
 		},
 	}
 }
